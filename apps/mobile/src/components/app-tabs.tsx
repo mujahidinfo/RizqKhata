@@ -1,9 +1,63 @@
 import { NativeTabs } from 'expo-router/native-tabs';
 
 import { useTheme } from '@/hooks/use-theme';
+import { useBusinessType } from '@/lib/business';
+import { useT } from '@/lib/i18n';
 
+/**
+ * Tabs follow the business type (Profile → Business type):
+ *   Retail   Sell · Today · Products · Orders · More   (unchanged)
+ *   Service  Jobs · Sell · Today · Services · More
+ *   Both     Sell · Jobs · Today · Catalog · More
+ * Orders stays a (hidden) tab for service businesses, reached from More.
+ */
 export default function AppTabs() {
   const colors = useTheme();
+  const t = useT();
+  const type = useBusinessType();
+  const services = type !== 'RETAIL';
+
+  const sell = (
+    <NativeTabs.Trigger key="sell" name="(sell)">
+      <NativeTabs.Trigger.Label>{t('tabs.sell')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Icon sf={{ default: 'barcode.viewfinder', selected: 'barcode.viewfinder' }} md="barcode_scanner" />
+    </NativeTabs.Trigger>
+  );
+  const jobs = (
+    <NativeTabs.Trigger key="jobs" name="jobs" hidden={!services}>
+      <NativeTabs.Trigger.Label>{t('tabs.jobs')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Icon sf={{ default: 'wrench.and.screwdriver', selected: 'wrench.and.screwdriver.fill' }} md="build" />
+    </NativeTabs.Trigger>
+  );
+  const today = (
+    <NativeTabs.Trigger key="dashboard" name="dashboard">
+      <NativeTabs.Trigger.Label>{t('tabs.today')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} md="insights" />
+    </NativeTabs.Trigger>
+  );
+  const catalog = (
+    <NativeTabs.Trigger key="products" name="products">
+      <NativeTabs.Trigger.Label>
+        {type === 'SERVICE' ? t('tabs.services') : type === 'HYBRID' ? t('tabs.catalog') : t('tabs.products')}
+      </NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Icon sf={{ default: 'shippingbox', selected: 'shippingbox.fill' }} md="inventory_2" />
+    </NativeTabs.Trigger>
+  );
+  const orders = (
+    <NativeTabs.Trigger key="orders" name="orders" hidden={services}>
+      <NativeTabs.Trigger.Label>{t('tabs.orders')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Icon sf={{ default: 'receipt', selected: 'receipt.fill' }} md="receipt_long" />
+    </NativeTabs.Trigger>
+  );
+  const more = (
+    <NativeTabs.Trigger key="more" name="more">
+      <NativeTabs.Trigger.Label>{t('tabs.more')}</NativeTabs.Trigger.Label>
+      <NativeTabs.Trigger.Icon sf={{ default: 'ellipsis.circle', selected: 'ellipsis.circle.fill' }} md="more_horiz" />
+    </NativeTabs.Trigger>
+  );
+
+  // Selling comes first for shops; a repair shop starts its day on the jobs board.
+  const order = type === 'SERVICE' ? [jobs, sell, today, catalog, orders, more] : [sell, jobs, today, catalog, orders, more];
 
   return (
     <NativeTabs
@@ -19,32 +73,7 @@ export default function AppTabs() {
       }}
       // Always show every label — clearer at the counter than icon-only tabs.
       labelVisibilityMode="labeled">
-      {/* Selling is the job most opens of the app are for, so it comes first. */}
-      <NativeTabs.Trigger name="(sell)">
-        <NativeTabs.Trigger.Label>Sell</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'barcode.viewfinder', selected: 'barcode.viewfinder' }} md="barcode_scanner" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="dashboard">
-        <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} md="insights" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="products">
-        <NativeTabs.Trigger.Label>Products</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'shippingbox', selected: 'shippingbox.fill' }} md="inventory_2" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="orders">
-        <NativeTabs.Trigger.Label>Orders</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'receipt', selected: 'receipt.fill' }} md="receipt_long" />
-      </NativeTabs.Trigger>
-
-      {/* Everything beyond the counter: stock, suppliers, expenses, staff. */}
-      <NativeTabs.Trigger name="more">
-        <NativeTabs.Trigger.Label>More</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'ellipsis.circle', selected: 'ellipsis.circle.fill' }} md="more_horiz" />
-      </NativeTabs.Trigger>
+      {order}
     </NativeTabs>
   );
 }

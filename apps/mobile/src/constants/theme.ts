@@ -15,7 +15,7 @@ export const Colors = {
     backgroundSelected: '#E8E9EE',
     textSecondary: '#6B7280',
     border: '#E2E4E9',
-    primary: '#4D4FEF',
+    primary: '#17694C', // logo green
     onPrimary: '#FFFFFF',
     danger: '#EF4444',
     success: '#16A34A',
@@ -28,7 +28,7 @@ export const Colors = {
     backgroundSelected: '#1E293B',
     textSecondary: '#94A3B8',
     border: '#1E293B',
-    primary: '#3B82F6',
+    primary: '#1E8A61', // logo green, lifted to read on dark
     onPrimary: '#FFFFFF',
     danger: '#F87171',
     success: '#4ADE80',

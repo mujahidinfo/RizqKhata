@@ -35,7 +35,7 @@ export function OnboardingForm({ firstName }: { firstName: string }) {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-brand-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-primary-foreground">
@@ -88,7 +88,7 @@ export function OnboardingForm({ firstName }: { firstName: string }) {
                       aria-pressed={currency === c.code}
                       onClick={() => setCurrency(c.code)}
                       className={cn(
-                        "rounded-xl border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                        "rounded-xl border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500",
                         currency === c.code
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-input bg-background hover:bg-muted",

@@ -2,7 +2,7 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Linking, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 
 import { useSupplier } from '@/api/queries';
-import type { PaymentMethod, SupplierDetail } from '@/api/types';
+import type { SupplierDetail } from '@/api/types';
 import { Avatar } from '@/components/avatar';
 import { HeaderButton } from '@/components/header-button';
 import type { IconName } from '@/components/icon';
@@ -15,13 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { formatDateTime, useFormatCurrency } from '@/lib/format';
 import { canManage } from '@/lib/roles';
 import { useActiveShop } from '@/lib/session';
-
-const METHOD_LABEL: Record<PaymentMethod, string> = {
-  CASH: 'Cash',
-  CARD: 'Card',
-  MOBILE_MONEY: 'Mobile money',
-  BANK_TRANSFER: 'Bank transfer',
-};
+import { useT, type Translator } from '@/lib/i18n';
 
 type Entry = {
   key: string;
@@ -33,21 +27,21 @@ type Entry = {
 };
 
 /** Deliveries and payments in one newest-first timeline. */
-function timeline(supplier: SupplierDetail): Entry[] {
+function timeline(supplier: SupplierDetail, t: Translator): Entry[] {
   return [
     ...supplier.purchases.map<Entry>((p) => ({
       key: `p-${p.id}`,
       kind: 'delivery',
-      title: 'Delivery',
-      subtitle: `${formatDateTime(p.createdAt)} · ${p.shop.name}`,
+      title: t('suppliers.delivery'),
+      subtitle: `${formatDateTime(p.createdAt, t)} · ${p.shop.name}`,
       amount: p.total,
       at: p.createdAt,
     })),
     ...supplier.payments.map<Entry>((p) => ({
       key: `pay-${p.id}`,
       kind: 'payment',
-      title: 'Payment',
-      subtitle: [formatDateTime(p.createdAt), METHOD_LABEL[p.paymentMethod], p.note].filter(Boolean).join(' · '),
+      title: t('suppliers.payment'),
+      subtitle: [formatDateTime(p.createdAt, t), t(`common.paymentMethods.${p.paymentMethod}`), p.note].filter(Boolean).join(' · '),
       amount: p.amount,
       at: p.createdAt,
     })),
@@ -57,6 +51,7 @@ function timeline(supplier: SupplierDetail): Entry[] {
 export default function SupplierDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const t = useT();
   const active = useActiveShop();
   const formatCurrency = useFormatCurrency();
   const { data: supplier, isLoading, error, refetch, isRefetching } = useSupplier(id);
@@ -65,7 +60,7 @@ export default function SupplierDetailScreen() {
 
   const owed = supplier.due > 0;
   const paidShare = supplier.totalPurchased > 0 ? Math.min(supplier.totalPaid / supplier.totalPurchased, 1) : 0;
-  const entries = timeline(supplier);
+  const entries = timeline(supplier, t);
 
   return (
     <>
@@ -73,7 +68,7 @@ export default function SupplierDetailScreen() {
         options={{
           title: supplier.name,
           headerRight: () => (
-            <HeaderButton title="Edit" onPress={() => router.push({ pathname: '/supplier-form', params: { id: supplier.id } })} />
+            <HeaderButton title={t('common.edit')} onPress={() => router.push({ pathname: '/supplier-form', params: { id: supplier.id } })} />
           ),
         }}
       />
@@ -86,7 +81,7 @@ export default function SupplierDetailScreen() {
             <Avatar name={supplier.name} size={52} />
             <View style={{ flex: 1, gap: 2 }}>
               <ThemedText type="small" themeColor="textSecondary">
-                {owed ? 'You owe' : 'All settled'}
+                {owed ? t('suppliers.youOwe') : t('suppliers.allSettled')}
               </ThemedText>
               <ThemedText
                 style={{ fontSize: 32, lineHeight: 38, fontWeight: 700, fontVariant: ['tabular-nums'] }}
@@ -102,10 +97,10 @@ export default function SupplierDetailScreen() {
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <ThemedText type="caption" themeColor="textSecondary">
-                  Paid {formatCurrency(supplier.totalPaid)}
+                  {t('suppliers.paidAmount', { amount: formatCurrency(supplier.totalPaid) })}
                 </ThemedText>
                 <ThemedText type="caption" themeColor="textSecondary">
-                  Bought {formatCurrency(supplier.totalPurchased)}
+                  {t('suppliers.bought', { amount: formatCurrency(supplier.totalPurchased) })}
                 </ThemedText>
               </View>
             </View>
@@ -116,14 +111,14 @@ export default function SupplierDetailScreen() {
           <Action
             icon="receive"
             tint={TINT.emerald}
-            label="Receive"
+            label={t('suppliers.receive')}
             onPress={() => router.push({ pathname: '/receive-stock', params: { supplierId: supplier.id } })}
           />
           {canManage(active.role) && (
             <Action
               icon="money"
               tint={TINT.indigo}
-              label="Pay"
+              label={t('suppliers.pay')}
               disabled={!owed}
               onPress={() => router.push({ pathname: '/supplier-payment', params: { supplierId: supplier.id } })}
             />
@@ -131,23 +126,23 @@ export default function SupplierDetailScreen() {
           <Action
             icon="reorder"
             tint={TINT.amber}
-            label="Reorder"
+            label={t('suppliers.reorder')}
             onPress={() => router.push({ pathname: '/receive-stock', params: { supplierId: supplier.id, reorder: '1' } })}
           />
-          {supplier.phone && <Action icon="phone" tint={TINT.sky} label="Call" onPress={() => Linking.openURL(`tel:${supplier.phone}`)} />}
+          {supplier.phone && <Action icon="phone" tint={TINT.sky} label={t('suppliers.call')} onPress={() => Linking.openURL(`tel:${supplier.phone}`)} />}
         </View>
 
         {(supplier.address || supplier.notes) && (
-          <Panel icon="info" tint={TINT.slate} title="Details">
-            {supplier.address && <Line label="Address" value={supplier.address} />}
-            {supplier.notes && <Line label="Notes" value={supplier.notes} />}
+          <Panel icon="info" tint={TINT.slate} title={t('suppliers.details')}>
+            {supplier.address && <Line label={t('suppliers.address')} value={supplier.address} />}
+            {supplier.notes && <Line label={t('suppliers.notes')} value={supplier.notes} />}
           </Panel>
         )}
 
-        <Panel icon="history" tint={TINT.violet} title="Activity">
+        <Panel icon="history" tint={TINT.violet} title={t('suppliers.activity')}>
           {entries.length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
-              No deliveries or payments yet. Tap Receive when stock arrives.
+              {t('suppliers.noActivity')}
             </ThemedText>
           ) : (
             entries.map((e) => (

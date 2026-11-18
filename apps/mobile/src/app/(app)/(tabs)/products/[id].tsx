@@ -1,27 +1,26 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useProduct } from '@/api/queries';
-import type { StockMovementType } from '@/api/types';
 import { Badge } from '@/components/badge';
 import { Card, DetailRow } from '@/components/card';
+import { HeaderButton } from '@/components/header-button';
+import { ProductThumb } from '@/components/product-thumb';
 import { QueryState } from '@/components/query-state';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDateTime, totalStock, useFormatCurrency } from '@/lib/format';
-
-const MOVEMENT_LABEL: Record<StockMovementType, string> = {
-  IN: 'Stock in',
-  OUT: 'Stock out',
-  ADJUSTMENT: 'Set to',
-  RETURN: 'Returned',
-};
+import { useT } from '@/lib/i18n';
+import { canEditCatalog } from '@/lib/roles';
+import { useActiveShop } from '@/lib/session';
 
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
+  const canEdit = canEditCatalog(useActiveShop().role);
   const { data: product, isLoading, error, refetch, isRefetching } = useProduct(id);
 
   if (!product) {
@@ -33,7 +32,14 @@ export default function ProductDetailScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: product.name }} />
+      <Stack.Screen
+        options={{
+          title: product.name,
+          headerRight: canEdit
+            ? () => <HeaderButton title={t('common.edit')} onPress={() => router.push({ pathname: '/new-product', params: { id: product.id } })} />
+            : undefined,
+        }}
+      />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.content}
@@ -41,23 +47,26 @@ export default function ProductDetailScreen() {
           <RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={theme.primary} />
         }>
         <View style={styles.hero}>
-          <ThemedText type="subtitle">{product.name}</ThemedText>
-          {product.category && (
-            <ThemedText type="small" themeColor="textSecondary">
-              {product.category.name}
-            </ThemedText>
-          )}
+          <ProductThumb name={product.name} imageUrl={product.imageUrl} size={88} radius={18} />
+          <View style={styles.heroText}>
+            <ThemedText type="subtitle">{product.name}</ThemedText>
+            {product.category && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {product.category.name}
+              </ThemedText>
+            )}
+          </View>
         </View>
 
-        <Card title="Pricing">
-          <DetailRow label="Price" value={formatCurrency(product.price)} emphasis />
-          <DetailRow label="Cost" value={formatCurrency(product.costPrice)} />
-          {product.sku && <DetailRow label="SKU" value={product.sku} />}
-          {product.barcode && <DetailRow label="Barcode" value={product.barcode} />}
+        <Card title={t('products.pricing')}>
+          <DetailRow label={t('products.price')} value={formatCurrency(product.price)} emphasis />
+          <DetailRow label={t('products.cost')} value={formatCurrency(product.costPrice)} />
+          {product.sku && <DetailRow label={t('products.sku')} value={product.sku} />}
+          {product.barcode && <DetailRow label={t('products.barcode')} value={product.barcode} />}
         </Card>
 
         {product.variants.length > 0 && (
-          <Card title={`Stock · ${totalStock(product.variants)} total`}>
+          <Card title={t('products.stockTotal', { count: totalStock(product.variants) })}>
             {product.variants.map((v) => {
               const low = v.stock <= v.lowStock;
               return (
@@ -65,11 +74,11 @@ export default function ProductDetailScreen() {
                   <View style={styles.variantMain}>
                     <ThemedText type="small">{v.name}</ThemedText>
                     <ThemedText type="caption" themeColor="textSecondary">
-                      {formatCurrency(v.price ?? product.price)} · alert at {v.lowStock}
+                      {formatCurrency(v.price ?? product.price)} · {t('products.alertAt', { count: v.lowStock })}
                     </ThemedText>
                   </View>
                   {low ? (
-                    <Badge label={v.stock === 0 ? 'Out' : `${v.stock} left`} tone="danger" />
+                    <Badge label={v.stock === 0 ? t('sellParts.out') : t('sellParts.left', { count: v.stock })} tone="danger" />
                   ) : (
                     <ThemedText type="smallBold">{v.stock}</ThemedText>
                   )}
@@ -80,22 +89,22 @@ export default function ProductDetailScreen() {
         )}
 
         {product.description ? (
-          <Card title="Description">
+          <Card title={t('products.description')}>
             <ThemedText type="small">{product.description}</ThemedText>
           </Card>
         ) : null}
 
         {product.stockMovements.length > 0 && (
-          <Card title="Recent stock activity">
+          <Card title={t('products.recentActivity')}>
             {product.stockMovements.map((m) => (
               <View key={m.id} style={styles.variant}>
                 <View style={styles.variantMain}>
                   <ThemedText type="small">
-                    {MOVEMENT_LABEL[m.type]} {m.quantity}
+                    {t(`products.movement.${m.type}`)} {m.quantity}
                     {variantName(m.variantId) ? ` · ${variantName(m.variantId)}` : ''}
                   </ThemedText>
                   <ThemedText type="caption" themeColor="textSecondary">
-                    {[formatDateTime(m.createdAt), m.note].filter(Boolean).join(' · ')}
+                    {[formatDateTime(m.createdAt, t), m.note].filter(Boolean).join(' · ')}
                   </ThemedText>
                 </View>
               </View>
@@ -113,8 +122,14 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   hero: {
-    gap: Spacing.half,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
     paddingHorizontal: Spacing.one,
+  },
+  heroText: {
+    flex: 1,
+    gap: Spacing.half,
   },
   variant: {
     flexDirection: 'row',

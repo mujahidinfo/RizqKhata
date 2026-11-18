@@ -23,7 +23,7 @@ const PERIODS = [
 ] as const satisfies readonly { labelKey: TranslationKey; value: number }[];
 
 const PIE_COLORS = [
-  "#6366f1", "#f59e0b", "#10b981", "#ef4444",
+  "#17694C", "#f59e0b", "#6366f1", "#ef4444",
   "#8b5cf6", "#06b6d4", "#f97316", "#ec4899",
 ];
 
@@ -119,8 +119,8 @@ export function FinanceOverview() {
               >
                 <defs>
                   <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#17694C" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#17694C" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#ef4444" stopOpacity={0.15} />
@@ -156,7 +156,7 @@ export function FinanceOverview() {
                 <Area
                   type="monotone"
                   dataKey="income"
-                  stroke="#10b981"
+                  stroke="#17694C"
                   strokeWidth={2}
                   fill="url(#incomeGrad)"
                 />
@@ -286,7 +286,7 @@ type Color = "emerald" | "red" | "indigo" | "amber" | "slate";
 const COLOR_MAP: Record<Color, { bg: string; icon: string; text: string }> = {
   emerald: { bg: "bg-emerald-50", icon: "text-emerald-600", text: "text-emerald-700" },
   red:     { bg: "bg-red-50",     icon: "text-red-600",     text: "text-red-700"     },
-  indigo:  { bg: "bg-indigo-50",  icon: "text-indigo-600",  text: "text-indigo-700"  },
+  indigo:  { bg: "bg-brand-50",  icon: "text-brand-600",  text: "text-brand-700"  },
   amber:   { bg: "bg-amber-50",   icon: "text-amber-600",   text: "text-amber-700"   },
   slate:   { bg: "bg-slate-100",  icon: "text-slate-600",   text: "text-slate-700"   },
 };

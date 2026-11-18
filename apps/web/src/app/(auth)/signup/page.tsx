@@ -32,11 +32,11 @@ export default function SignupPage() {
   const tooShort = password.length > 0 && password.length < MIN_PASSWORD;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-brand-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-primary-foreground">
-            <Link href="/" aria-label="GenPOS home">
+            <Link href="/" aria-label="Rizq Khata home">
               <ShoppingBag className="w-7 h-7" />
             </Link>
           </div>

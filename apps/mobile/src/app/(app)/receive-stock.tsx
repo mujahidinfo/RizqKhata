@@ -27,6 +27,7 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/lib/api-client';
 import { useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
 type Line = {
   variantId: string;
@@ -41,13 +42,17 @@ type Line = {
 
 type Payment = 'full' | 'later' | 'part';
 
-type Receipt = { items: number; units: number; total: number; paid: number; supplierId: string | null };
+type Receipt = {
+  items: number;
+  units: number;
+  total: number;
+  paid: number;
+  supplierId: string | null;
+  /** Saved offline; syncs later. */
+  queued: boolean;
+};
 
-const METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'CASH', label: 'Cash' },
-  { value: 'MOBILE_MONEY', label: 'bKash / Mobile' },
-  { value: 'BANK_TRANSFER', label: 'Bank' },
-];
+const METHODS: PaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'BANK_TRANSFER'];
 
 const toNumber = (text: string) => Number(text.replace(/,/g, ''));
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -78,6 +83,7 @@ export default function ReceiveStockScreen() {
         variantId: i.variantId,
         productId: i.productId,
         name: i.name,
+        imageUrl: i.imageUrl,
         stock: i.stock,
         quantity: String(i.suggestedQuantity),
         unitCost: i.unitCost ? String(i.unitCost) : '',
@@ -102,6 +108,7 @@ function ReceiveStockForm({
   reorderCount?: number;
 }) {
   const theme = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const formatCurrency = useFormatCurrency();
@@ -179,7 +186,7 @@ function ReceiveStockForm({
         setNotFound(code);
       }
     } catch (e) {
-      setError(e instanceof ApiError ? e.message : 'Couldn’t look that up.');
+      setError(e instanceof ApiError ? e.message : t('receive.lookupFailed'));
     } finally {
       busy.current = false;
     }
@@ -198,7 +205,8 @@ function ReceiveStockForm({
     setError(null);
     const paid = round2(paidAmount);
     try {
-      await createPurchase.mutateAsync({
+      const result = await createPurchase.mutateAsync({
+        total,
         supplierId: supplierId ?? undefined,
         items: lines.map((l) => ({
           productId: l.productId,
@@ -211,9 +219,9 @@ function ReceiveStockForm({
         updateCostPrice: updateCost,
       });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setReceipt({ items: lines.length, units, total, paid, supplierId });
+      setReceipt({ items: lines.length, units, total, paid, supplierId, queued: result.status === 'queued' });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the delivery.');
+      setError(e instanceof Error ? e.message : t('receive.couldNotSave'));
     }
   };
 
@@ -232,30 +240,37 @@ function ReceiveStockForm({
       <View style={{ flex: 1, backgroundColor: theme.background, padding: Spacing.four, gap: Spacing.four, justifyContent: 'center' }}>
         <View style={{ alignItems: 'center', gap: Spacing.two }}>
           <IconTile name="tick" tint={TINT.emerald} size={72} />
-          <ThemedText type="subtitle">Stock received</ThemedText>
+          <ThemedText type="subtitle">{t('receive.stockReceived')}</ThemedText>
           <ThemedText themeColor="textSecondary" style={{ textAlign: 'center' }}>
-            {receipt.units} unit{receipt.units === 1 ? '' : 's'} of {receipt.items} product{receipt.items === 1 ? '' : 's'} added
-            to your shelves.
+            {t('receive.addedToShelves', {
+              units: t('common.units', { count: receipt.units }),
+              products: t('common.products', { count: receipt.items }),
+            })}
           </ThemedText>
+          {receipt.queued && (
+            <ThemedText type="smallBold" style={{ color: theme.warning, textAlign: 'center' }}>
+              {t('receive.savedOffline')}
+            </ThemedText>
+          )}
         </View>
         <Panel>
-          <SummaryLine label="Delivery total" value={formatCurrency(receipt.total)} bold />
-          {receiptSupplier && <SummaryLine label="From" value={receiptSupplier.name} />}
-          {receipt.supplierId && <SummaryLine label="Paid now" value={formatCurrency(receipt.paid)} />}
+          <SummaryLine label={t('receive.deliveryTotal')} value={formatCurrency(receipt.total)} bold />
+          {receiptSupplier && <SummaryLine label={t('receive.from')} value={receiptSupplier.name} />}
+          {receipt.supplierId && <SummaryLine label={t('receive.paidNow')} value={formatCurrency(receipt.paid)} />}
           {receipt.supplierId && receipt.total - receipt.paid > 0.005 && (
-            <SummaryLine label="Still owed" value={formatCurrency(receipt.total - receipt.paid)} danger />
+            <SummaryLine label={t('receive.stillOwed')} value={formatCurrency(receipt.total - receipt.paid)} danger />
           )}
         </Panel>
         {receipt.supplierId && receipt.paid > 0 && (
           <ThemedText type="caption" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-            The payment is also recorded in your Expenses.
+            {t('receive.alsoExpense')}
           </ThemedText>
         )}
         <View style={{ gap: Spacing.two }}>
-          <Button title="Receive more" onPress={receiveMore} />
+          <Button title={t('receive.receiveMore')} onPress={receiveMore} />
           {receipt.supplierId && (
             <Button
-              title="View supplier"
+              title={t('receive.viewSupplier')}
               variant="secondary"
               onPress={() => {
                 router.back();
@@ -263,7 +278,7 @@ function ReceiveStockForm({
               }}
             />
           )}
-          <Button title="Done" variant="secondary" onPress={() => router.back()} />
+          <Button title={t('common.done')} variant="secondary" onPress={() => router.back()} />
         </View>
       </View>
     );
@@ -286,38 +301,38 @@ function ReceiveStockForm({
             <IconTile name="reorder" tint={TINT.amber} size={40} />
             <ThemedText type="small" style={{ flex: 1 }}>
               {reorderCount === 0
-                ? 'Nothing is running low right now.'
-                : `${reorderCount} item${reorderCount === 1 ? '' : 's'} running low. Check the quantities, then confirm when the delivery arrives.`}
+                ? t('receive.nothingLow')
+                : t('receive.runningLow', { count: reorderCount })}
             </ThemedText>
           </View>
         )}
 
         {/* 1 · Supplier */}
         <View style={{ gap: Spacing.two }}>
-          <StepLabel n={1}>Who delivered?</StepLabel>
+          <StepLabel n={1}>{t('receive.whoDelivered')}</StepLabel>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.two }}>
-            <Chip label="No supplier" selected={supplierId === null} onPress={() => setSupplierId(null)} />
+            <Chip label={t('receive.noSupplier')} selected={supplierId === null} onPress={() => setSupplierId(null)} />
             {(suppliers.data ?? []).map((s) => (
               <Chip key={s.id} label={s.name} selected={supplierId === s.id} onPress={() => setSupplierId(s.id)} />
             ))}
-            <Chip label="+ New" selected={false} onPress={() => router.push('/supplier-form')} />
+            <Chip label={t('receive.newChip')} selected={false} onPress={() => router.push('/supplier-form')} />
           </ScrollView>
           {supplier && supplier.due > 0 && (
             <ThemedText type="caption" themeColor="textSecondary">
-              You already owe {supplier.name} {formatCurrency(supplier.due)}.
+              {t('receive.alreadyOwe', { name: supplier.name, amount: formatCurrency(supplier.due) })}
             </ThemedText>
           )}
         </View>
 
         {/* 2 · Items */}
         <View style={{ gap: Spacing.two }}>
-          <StepLabel n={2}>What arrived?</StepLabel>
+          <StepLabel n={2}>{t('receive.whatArrived')}</StepLabel>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
-            <SearchPill value={search} onChangeText={setSearch} placeholder="Search by name or SKU" />
+            <SearchPill value={search} onChangeText={setSearch} placeholder={t('receive.searchPlaceholder')} />
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: scanning }}
-              accessibilityLabel={scanning ? 'Hide camera' : 'Scan barcodes'}
+              accessibilityLabel={scanning ? t('receive.hideCamera') : t('receive.scanBarcodes')}
               onPress={() => setScanning((v) => !v)}
               style={{
                 width: 44,
@@ -337,9 +352,9 @@ function ReceiveStockForm({
 
           {notFound && (
             <Panel>
-              <ThemedText type="smallBold">{notFound} isn’t in your products</ThemedText>
+              <ThemedText type="smallBold">{t('receive.notInProducts', { code: notFound })}</ThemedText>
               <Button
-                title="Add it as a new product"
+                title={t('receive.addAsNew')}
                 variant="secondary"
                 onPress={() => {
                   setNotFound(null);
@@ -355,7 +370,7 @@ function ReceiveStockForm({
                 <Pressable
                   key={p.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`Add ${p.name}`}
+                  accessibilityLabel={t('receive.addA11y', { name: p.name })}
                   onPress={() => {
                     addProduct(p);
                     setSearch('');
@@ -372,7 +387,7 @@ function ReceiveStockForm({
                     {p.name}
                   </ThemedText>
                   <ThemedText type="smallBold" themeColor="primary">
-                    Add
+                    {t('receive.add')}
                   </ThemedText>
                 </Pressable>
               ))}
@@ -380,7 +395,7 @@ function ReceiveStockForm({
           )}
 
           {pickVariantOf && (
-            <Panel icon="box" tint={TINT.indigo} title={`Which ${pickVariantOf.name}?`}>
+            <Panel icon="box" tint={TINT.indigo} title={t('receive.whichVariant', { name: pickVariantOf.name })}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two }}>
                 {pickVariantOf.variants.map((v) => (
                   <Chip
@@ -402,7 +417,7 @@ function ReceiveStockForm({
           <View style={{ alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.four }}>
             <Icon name="box" size={34} color={theme.textSecondary} />
             <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-              Scan a barcode or search to add what arrived.
+              {t('receive.scanOrSearch')}
             </ThemedText>
           </View>
         )}
@@ -422,12 +437,12 @@ function ReceiveStockForm({
         {lines.length > 0 && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingHorizontal: Spacing.one }}>
             <View style={{ flex: 1 }}>
-              <ThemedText type="small">Update cost prices</ThemedText>
+              <ThemedText type="small">{t('receive.updateCost')}</ThemedText>
               <ThemedText type="caption" themeColor="textSecondary">
-                Keep each product’s cost in step with what you just paid.
+                {t('receive.updateCostHint')}
               </ThemedText>
             </View>
-            <Switch value={updateCost} onValueChange={setUpdateCost} trackColor={{ true: theme.primary }} accessibilityLabel="Update cost prices" />
+            <Switch value={updateCost} onValueChange={setUpdateCost} trackColor={{ true: theme.primary }} accessibilityLabel={t('receive.updateCost')} />
           </View>
         )}
 
@@ -452,7 +467,7 @@ function ReceiveStockForm({
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
             <View>
               <ThemedText type="caption" themeColor="textSecondary">
-                {lines.length} item{lines.length === 1 ? '' : 's'} · {units} unit{units === 1 ? '' : 's'}
+                {t('common.items', { count: lines.length })} · {t('common.units', { count: units })}
               </ThemedText>
               <ThemedText style={{ fontSize: 24, lineHeight: 30, fontWeight: 700, fontVariant: ['tabular-nums'] }}>
                 {formatCurrency(total)}
@@ -460,7 +475,7 @@ function ReceiveStockForm({
             </View>
             {supplierId && owed > 0 && (
               <ThemedText type="smallBold" themeColor="danger">
-                {formatCurrency(owed)} owed
+                {t('receive.owed', { amount: formatCurrency(owed) })}
               </ThemedText>
             )}
           </View>
@@ -470,22 +485,26 @@ function ReceiveStockForm({
           <>
             <Segmented
               options={[
-                { value: 'full', label: 'Paid in full' },
-                { value: 'part', label: 'Part paid' },
-                { value: 'later', label: 'Pay later' },
+                { value: 'full', label: t('receive.paidFull') },
+                { value: 'part', label: t('receive.partPaid') },
+                { value: 'later', label: t('receive.payLater') },
               ]}
               value={payment}
               onChange={setPayment}
             />
             {payment === 'part' && (
-              <LabeledInput label="Amount paid now" value={partAmount} onChangeText={setPartAmount} keyboardType="decimal-pad" />
+              <LabeledInput label={t('receive.amountPaidNow')} value={partAmount} onChangeText={setPartAmount} keyboardType="decimal-pad" />
             )}
-            {paidAmount > 0 && <Segmented options={METHODS} value={method} onChange={setMethod} />}
+            {paidAmount > 0 && <Segmented
+                options={METHODS.map((value) => ({ value, label: t(`common.paymentMethods.${value}`) }))}
+                value={method}
+                onChange={setMethod}
+              />}
           </>
         )}
 
         <Button
-          title={lines.length ? 'Confirm delivery' : 'Add items to receive'}
+          title={lines.length ? t('receive.confirm') : t('receive.addItems')}
           onPress={save}
           loading={createPurchase.isPending}
           disabled={!linesValid || !paymentValid}
@@ -547,6 +566,7 @@ function LineCard({
   onRemove: () => void;
 }) {
   const theme = useTheme();
+  const t = useT();
   const qty = toNumber(line.quantity) || 0;
   return (
     <Panel style={{ gap: Spacing.two + 2 }}>
@@ -558,11 +578,11 @@ function LineCard({
           </ThemedText>
           {line.stock !== undefined && (
             <ThemedText type="caption" themeColor="textSecondary">
-              {line.stock} in stock → {line.stock + qty} after
+              {t('receive.stockAfter', { stock: line.stock, after: line.stock + qty })}
             </ThemedText>
           )}
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${line.name}`} hitSlop={10} onPress={onRemove}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('receive.removeA11y', { name: line.name })} hitSlop={10} onPress={onRemove}>
           <Icon name="close" size={18} color={theme.textSecondary} />
         </Pressable>
       </View>
@@ -570,7 +590,7 @@ function LineCard({
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three }}>
         <View style={{ gap: 4 }}>
           <ThemedText type="caption" themeColor="textSecondary">
-            Quantity
+            {t('receive.quantity')}
           </ThemedText>
           <View
             style={{
@@ -580,24 +600,24 @@ function LineCard({
               borderCurve: 'continuous',
               backgroundColor: theme.background,
             }}>
-            <StepButton icon="minus" label="Less" onPress={() => onBump(-1)} />
+            <StepButton icon="minus" label={t('receive.less')} onPress={() => onBump(-1)} />
             <TextInput
               value={line.quantity}
               onChangeText={onQuantity}
               keyboardType="number-pad"
               selectTextOnFocus
-              accessibilityLabel={`Quantity of ${line.name}`}
+              accessibilityLabel={t('receive.quantityOfA11y', { name: line.name })}
               style={{ width: 52, textAlign: 'center', fontSize: 17, fontWeight: 600, color: theme.text, paddingVertical: 10 }}
             />
-            <StepButton icon="plus" label="More" onPress={() => onBump(1)} />
+            <StepButton icon="plus" label={t('receive.more')} onPress={() => onBump(1)} />
           </View>
         </View>
         <View style={{ flex: 1 }}>
-          <LabeledInput label="Cost each" value={line.unitCost} onChangeText={onCost} keyboardType="decimal-pad" />
+          <LabeledInput label={t('receive.costEach')} value={line.unitCost} onChangeText={onCost} keyboardType="decimal-pad" />
         </View>
         <View style={{ alignItems: 'flex-end', paddingBottom: 12, minWidth: 70 }}>
           <ThemedText type="caption" themeColor="textSecondary">
-            Total
+            {t('common.total')}
           </ThemedText>
           <ThemedText type="smallBold" style={{ fontVariant: ['tabular-nums'] }}>
             {lineTotal}

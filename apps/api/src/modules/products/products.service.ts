@@ -53,11 +53,12 @@ export class ProductsService {
 
   async list(
     tenant: TenantContext,
-    { search, categoryId, lowStock, page, pageSize }: ListProductsQueryDto,
+    { search, categoryId, lowStock, kind, page, pageSize }: ListProductsQueryDto,
   ) {
     const where: Prisma.ProductWhereInput = {
       businessId: tenant.businessId,
       isActive: true,
+      ...(kind && { kind }),
       ...(categoryId && { categoryId }),
       ...(search && {
         OR: [
@@ -168,6 +169,8 @@ export class ProductsService {
             businessId: tenant.businessId,
           },
         });
+        // Services are sold, never stocked: no inventory row, no stock alerts.
+        if (data.kind === 'SERVICE') continue;
         await tx.inventory.create({
           data: {
             shopId: tenant.shopId,

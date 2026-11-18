@@ -13,11 +13,12 @@ import { ListSeparator } from '@/components/list-row';
 import { QueryState } from '@/components/query-state';
 import { CartBar } from '@/components/sell/cart-bar';
 import { ModeToggle, type SellMode } from '@/components/sell/mode-toggle';
+import { FloatingBottom, TabScreen } from '@/components/safe-area';
 import { ProductCard } from '@/components/sell/product-card';
 import { SearchPill } from '@/components/sell/search-pill';
 import { VariantSheet } from '@/components/sell/variant-sheet';
 import { ThemedText } from '@/components/themed-text';
-import { BottomTabInset, Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/lib/api-client';
@@ -26,11 +27,13 @@ import { useFormatCurrency } from '@/lib/format';
 import { canEditCatalog } from '@/lib/roles';
 import { secureStorage } from '@/lib/secure-storage';
 import { useActiveShop } from '@/lib/session';
+import { useT } from '@/lib/i18n';
 
 const MODE_KEY = 'genpos.sellMode';
 const HIGHLIGHT_MS = 1200;
-// The native tab bar floats over content on iOS.
-const BOTTOM_OFFSET = (process.env.EXPO_OS === 'ios' ? BottomTabInset : 0) + Spacing.three;
+// Room under the last row for the floating cart bar. The tab bar itself is
+// covered by the lists' automatic content inset (iOS) / NativeTabs padding (Android).
+const CART_BAR_SPACE = 96;
 
 type ScanStatus =
   | { kind: 'idle' }
@@ -48,6 +51,7 @@ function quickVariant(product: Product) {
 
 export default function SellScreen() {
   const theme = useTheme();
+  const t = useT();
   const isFocused = useIsFocused();
   const shop = useActiveShop();
   const cart = useCart();
@@ -119,7 +123,7 @@ export default function SellScreen() {
           setStatus({ kind: 'idle' });
           router.push({ pathname: '/new-product', params: { barcode: code, addToCart: '1' } });
         } else {
-          setStatus({ kind: 'error', message: `${code} isn’t in your products. Ask a manager to add it.` });
+          setStatus({ kind: 'error', message: t('sell.notInProducts', { code }) });
         }
         return;
       }
@@ -136,23 +140,23 @@ export default function SellScreen() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setStatus({
         kind: 'error',
-        message: error instanceof ApiError ? error.message : 'Couldn’t look that up. Try again.',
+        message: error instanceof ApiError ? error.message : t('sell.lookupFailed'),
       });
     } finally {
       busy.current = false;
     }
   };
 
-  const bottomSpace = cart.lines.length ? 96 + BOTTOM_OFFSET : BOTTOM_OFFSET;
+  const bottomSpace = (cart.lines.length ? CART_BAR_SPACE : 0) + Spacing.three;
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <TabScreen style={{ backgroundColor: theme.background }}>
       {/* Search + mode */}
       <View style={{ flexDirection: 'row', gap: Spacing.two, paddingHorizontal: Spacing.three, paddingTop: Spacing.two, paddingBottom: Spacing.two }}>
         <SearchPill
           value={search}
           onChangeText={setSearch}
-          placeholder="Search products"
+          placeholder={t('sell.searchPlaceholder')}
           // Typing means looking for something by name: show the grid.
           onFocus={() => mode === 'scan' && changeMode('browse')}
         />
@@ -167,7 +171,7 @@ export default function SellScreen() {
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ gap: Spacing.two, paddingHorizontal: Spacing.three, paddingBottom: Spacing.two }}>
-                <Chip label="All" selected={!categoryId} onPress={() => setCategoryId(undefined)} />
+                <Chip label={t('common.all')} selected={!categoryId} onPress={() => setCategoryId(undefined)} />
                 {categories.data!.map((c) => (
                   <Chip key={c.id} label={c.name} selected={categoryId === c.id} onPress={() => setCategoryId(c.id)} />
                 ))}
@@ -181,6 +185,7 @@ export default function SellScreen() {
             keyExtractor={(product) => product.id}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
+            contentInsetAdjustmentBehavior="automatic"
             columnWrapperStyle={{ gap: Spacing.three }}
             contentContainerStyle={{ flexGrow: 1, gap: Spacing.three, paddingHorizontal: Spacing.three, paddingTop: Spacing.one, paddingBottom: bottomSpace }}
             renderItem={({ item, index }) => {
@@ -212,10 +217,10 @@ export default function SellScreen() {
               ) : (
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two, padding: Spacing.five }}>
                   <Icon name="box" size={34} color={theme.textSecondary} />
-                  <ThemedText type="smallBold">{debounced ? `No “${debounced}” found` : 'No products here yet'}</ThemedText>
+                  <ThemedText type="smallBold">{debounced ? t('sell.noneFound', { query: debounced }) : t('sell.noProductsHere')}</ThemedText>
                   {canAddProducts && (
                     <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-                      Add products from the Products tab.
+                      {t('sell.addFromProducts')}
                     </ThemedText>
                   )}
                 </View>
@@ -230,6 +235,7 @@ export default function SellScreen() {
         <FlatList
           data={cart.lines}
           keyExtractor={(l) => l.variantId}
+          contentInsetAdjustmentBehavior="automatic"
           ItemSeparatorComponent={ListSeparator}
           contentContainerStyle={{ flexGrow: 1, paddingBottom: bottomSpace }}
           ListHeaderComponent={
@@ -252,11 +258,11 @@ export default function SellScreen() {
           )}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', gap: Spacing.one, padding: Spacing.four }}>
-              <ThemedText type="smallBold">Point the camera at a barcode</ThemedText>
+              <ThemedText type="smallBold">{t('sell.pointCamera')}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center' }}>
-                Items without one? Switch to{' '}
+                {t('sell.noBarcode')}
                 <ThemedText type="small" themeColor="primary" onPress={() => changeMode('browse')}>
-                  Browse
+                  {t('sell.browse')}
                 </ThemedText>
                 .
               </ThemedText>
@@ -266,14 +272,14 @@ export default function SellScreen() {
       )}
 
       {cart.lines.length > 0 && (
-        <View style={{ position: 'absolute', left: Spacing.three, right: Spacing.three, bottom: BOTTOM_OFFSET }}>
+        <FloatingBottom style={{ paddingHorizontal: Spacing.three }}>
           <CartBar
             itemCount={cart.itemCount}
             total={formatCurrency(cart.subtotal)}
             onOpenCart={() => router.push('/cart')}
             onCharge={() => router.push('/checkout')}
           />
-        </View>
+        </FloatingBottom>
       )}
 
       <VariantSheet
@@ -285,20 +291,21 @@ export default function SellScreen() {
           setPickVariantOf(null);
         }}
       />
-    </View>
+    </TabScreen>
   );
 }
 
 function StatusPill({ status }: { status: ScanStatus }) {
   const theme = useTheme();
+  const t = useT();
   const text =
     status.kind === 'looking'
-      ? `Looking up ${status.code}…`
+      ? t('sell.lookingUp', { code: status.code })
       : status.kind === 'added'
-        ? `Added ${status.name}`
+        ? t('sell.added', { name: status.name })
         : status.kind === 'error'
           ? status.message
-          : 'Hold steady over the barcode';
+          : t('sell.holdSteady');
   const background =
     status.kind === 'added' ? theme.success : status.kind === 'error' ? theme.danger : 'rgba(15, 23, 42, 0.6)';
 

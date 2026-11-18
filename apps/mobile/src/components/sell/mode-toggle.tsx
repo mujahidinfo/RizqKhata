@@ -4,17 +4,19 @@ import { Pressable, View } from 'react-native';
 import { Icon, type IconName } from '@/components/icon';
 import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 export type SellMode = 'scan' | 'browse';
 
-const MODES: { value: SellMode; icon: IconName; label: string }[] = [
-  { value: 'scan', icon: 'scan', label: 'Scan barcodes' },
-  { value: 'browse', icon: 'grid', label: 'Browse products' },
+const MODES: { value: SellMode; icon: IconName; label: 'sellParts.scanMode' | 'sellParts.browseMode' }[] = [
+  { value: 'scan', icon: 'scan', label: 'sellParts.scanMode' },
+  { value: 'browse', icon: 'grid', label: 'sellParts.browseMode' },
 ];
 
 /** Compact icon segmented control: scan vs. pick from the product grid. */
 export function ModeToggle({ value, onChange }: { value: SellMode; onChange: (mode: SellMode) => void }) {
   const theme = useTheme();
+  const t = useT();
   return (
     <View
       accessibilityRole="tablist"
@@ -33,7 +35,7 @@ export function ModeToggle({ value, onChange }: { value: SellMode; onChange: (mo
           <Pressable
             key={m.value}
             accessibilityRole="tab"
-            accessibilityLabel={m.label}
+            accessibilityLabel={t(m.label)}
             accessibilityState={{ selected }}
             onPress={() => {
               if (selected) return;

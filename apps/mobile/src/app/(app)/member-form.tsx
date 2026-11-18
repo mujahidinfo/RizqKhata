@@ -12,8 +12,8 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { ROLE_LABEL } from '@/lib/roles';
 import { useActiveShop, useCurrentUser, useSession } from '@/lib/session';
+import { useT } from '@/lib/i18n';
 
 const ROLES: Role[] = ['CASHIER', 'INVENTORY_MANAGER', 'MANAGER', 'OWNER'];
 
@@ -30,6 +30,7 @@ export default function MemberFormScreen() {
 
 function MemberForm({ member }: { member?: Member }) {
   const theme = useTheme();
+  const t = useT();
   const me = useCurrentUser();
   const active = useActiveShop();
   const { workspaces } = useSession();
@@ -83,7 +84,7 @@ function MemberForm({ member }: { member?: Member }) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save.');
+      setError(e instanceof Error ? e.message : t('employeeForm.couldNotSave'));
     }
   };
 
@@ -99,36 +100,36 @@ function MemberForm({ member }: { member?: Member }) {
           </View>
         ) : (
           <>
-            <TextField label="Name" value={name} onChangeText={setName} autoCapitalize="words" autoFocus />
+            <TextField label={t('employeeForm.name')} value={name} onChangeText={setName} autoCapitalize="words" autoFocus />
             <TextField
-              label="Email"
+              label={t('memberForm.email')}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
             />
             <TextField
-              label="Password"
+              label={t('memberForm.password')}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              placeholder="Not needed if they already use GenPOS"
+              placeholder={t('memberForm.passwordPlaceholder')}
             />
             <ThemedText type="caption" themeColor="textSecondary">
-              Share the email and password with them so they can sign in on their phone.
+              {t('memberForm.shareHint')}
             </ThemedText>
           </>
         )}
 
-        <ChipGroup label="Role">
+        <ChipGroup label={t('memberForm.role')}>
           {roles.map((r) => (
-            <Chip key={r} label={ROLE_LABEL[r]} selected={role === r} onPress={() => setRole(r)} />
+            <Chip key={r} label={t(`roles.${r}`)} selected={role === r} onPress={() => setRole(r)} />
           ))}
         </ChipGroup>
 
         {branches.length > 1 && (
-          <ChipGroup label="Works at">
-            <Chip label="All branches" selected={shopId === null} onPress={() => setShopId(null)} />
+          <ChipGroup label={t('memberForm.worksAt')}>
+            <Chip label={t('staff.allBranches')} selected={shopId === null} onPress={() => setShopId(null)} />
             {branches.map((b) => (
               <Chip key={b.id} label={b.name} selected={shopId === b.id} onPress={() => setShopId(b.id)} />
             ))}
@@ -137,15 +138,15 @@ function MemberForm({ member }: { member?: Member }) {
 
         <View style={{ gap: Spacing.three }}>
           <TextField
-            label="Monthly salary (optional)"
+            label={t('memberForm.salaryOptional')}
             value={salary}
             onChangeText={setSalary}
             keyboardType="decimal-pad"
-            placeholder="Leave empty if not on payroll"
+            placeholder={t('memberForm.salaryPlaceholder')}
           />
           {salaryNum > 0 && (
             <TextField
-              label="Paid on day of the month (1–28)"
+              label={t('employeeForm.payDay')}
               value={payDay}
               onChangeText={(t) => setPayDay(t.replace(/\D/g, '').slice(0, 2))}
               keyboardType="number-pad"
@@ -153,7 +154,7 @@ function MemberForm({ member }: { member?: Member }) {
           )}
           {salaryNum > 0 && (
             <ThemedText type="caption" themeColor="textSecondary">
-              They’ll appear under Salaries each month, ready to pay in one tap.
+              {t('memberForm.salaryHint')}
             </ThemedText>
           )}
         </View>
@@ -161,16 +162,16 @@ function MemberForm({ member }: { member?: Member }) {
         {member && !isSelf && (
           <View style={styles.switchRow}>
             <View style={styles.flex}>
-              <ThemedText>Can sign in</ThemedText>
+              <ThemedText>{t('memberForm.canSignIn')}</ThemedText>
               <ThemedText type="caption" themeColor="textSecondary">
-                Turn off when someone leaves. Their past sales stay on record.
+                {t('memberForm.canSignInHint')}
               </ThemedText>
             </View>
             <Switch
               value={isActive}
               onValueChange={setIsActive}
               trackColor={{ true: theme.primary }}
-              accessibilityLabel="Can sign in"
+              accessibilityLabel={t('memberForm.canSignIn')}
             />
           </View>
         )}
@@ -180,7 +181,7 @@ function MemberForm({ member }: { member?: Member }) {
             {error}
           </ThemedText>
         )}
-        <Button title={member ? 'Save' : 'Add staff member'} onPress={save} loading={saving} disabled={!valid} />
+        <Button title={member ? t('common.save') : t('memberForm.add')} onPress={save} loading={saving} disabled={!valid} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

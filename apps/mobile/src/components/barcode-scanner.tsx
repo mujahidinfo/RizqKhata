@@ -6,6 +6,7 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 // Retail product codes plus QR. Fewer types = faster, fewer false reads.
 const BARCODE_TYPES: BarcodeType[] = ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'qr'];
@@ -36,6 +37,7 @@ export function BarcodeScanner({
   overlay?: ReactNode;
 }) {
   const theme = useTheme();
+  const t = useT();
   const [permission, requestPermission] = useCameraPermissions();
   // The hook's state can lag behind the system dialog on Android (the activity
   // pauses while it is shown), so trust the request's own result as well.
@@ -70,14 +72,14 @@ export function BarcodeScanner({
   if (!granted) {
     return (
       <View style={[frame, styles.center, styles.permission]}>
-        <ThemedText type="smallBold">Scan barcodes with your camera</ThemedText>
+        <ThemedText type="smallBold">{t('scanner.title')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
-          Point at a product and it goes straight into the cart.
+          {t('scanner.body')}
         </ThemedText>
         {permission?.canAskAgain !== false ? (
-          <Button title="Turn on camera" onPress={askForCamera} />
+          <Button title={t('scanner.turnOn')} onPress={askForCamera} />
         ) : (
-          <Button title="Open settings" variant="secondary" onPress={() => Linking.openSettings()} />
+          <Button title={t('scanner.openSettings')} variant="secondary" onPress={() => Linking.openSettings()} />
         )}
       </View>
     );

@@ -1,9 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
 
-import { useAnalyticsOverview, useSalesChart, useShop, useTopProducts } from '@/api/queries';
+import { useAnalyticsOverview, useJobsSummary, useSalesChart, useShop, useTopProducts } from '@/api/queries';
 import { Icon } from '@/components/icon';
 import { IconTile, TINT } from '@/components/icon-tile';
 import { CARD_SHADOW, Panel } from '@/components/panel';
@@ -16,28 +16,36 @@ import { useTheme } from '@/hooks/use-theme';
 import { useFormatCurrency } from '@/lib/format';
 import { canEditCatalog } from '@/lib/roles';
 import { useActiveShop, useCurrentUser } from '@/lib/session';
+import { useT } from '@/lib/i18n';
+import { useModules } from '@/lib/business';
 
 const PERIODS = [
-  { label: 'Today', days: 1, phrase: 'today' },
-  { label: '7 days', days: 7, phrase: 'last 7 days' },
-  { label: '30 days', days: 30, phrase: 'last 30 days' },
+  { key: 'today', days: 1 },
+  { key: 'week', days: 7 },
+  { key: 'month', days: 30 },
 ] as const;
 
-function greeting() {
+function greetingKey() {
   const h = new Date().getHours();
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  return h < 12 ? 'dashboard.morning' : h < 18 ? 'dashboard.afternoon' : 'dashboard.evening';
 }
+
+// The Jobs tab root. Typed by hand: route-type generation lists it as `/jobs/index`.
+const JOBS_TAB = '/jobs' as Href;
 
 export default function HomeScreen() {
   const user = useCurrentUser();
   const active = useActiveShop();
   const theme = useTheme();
+  const t = useT();
   const queryClient = useQueryClient();
   const formatCurrency = useFormatCurrency();
   const [days, setDays] = useState<number>(1);
 
   const { data: shop } = useShop();
   const overview = useAnalyticsOverview(days);
+  const { services } = useModules();
+  const jobs = useJobsSummary(services);
   const chart = useSalesChart(7);
   const topProducts = useTopProducts(days);
 
@@ -49,6 +57,7 @@ export default function HomeScreen() {
   };
 
   const period = PERIODS.find((p) => p.days === days) ?? PERIODS[0];
+  const phrase = t(`dashboard.phrases.${period.key}`);
   const lowStock = overview.data?.lowStockCount ?? 0;
 
   return (
@@ -58,7 +67,7 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}>
       <View style={{ paddingHorizontal: Spacing.one, gap: 2 }}>
         <ThemedText type="small" themeColor="textSecondary">
-          {greeting()}, {user.name.split(' ')[0]}
+          {t('dashboard.greeting', { greeting: t(greetingKey()), name: user.name.split(' ')[0] })}
         </ThemedText>
         <ThemedText style={{ fontSize: 22, lineHeight: 28, fontWeight: 700 }} numberOfLines={1}>
           {shop?.name ?? active.name}
@@ -99,7 +108,7 @@ export default function HomeScreen() {
                   boxShadow: selected ? '0 1px 2px rgba(15, 23, 42, 0.12)' : undefined,
                 }}>
                 <ThemedText type="smallBold" themeColor={selected ? 'text' : 'textSecondary'}>
-                  {p.label}
+                  {t(`dashboard.periods.${p.key}`)}
                 </ThemedText>
               </Pressable>
             );
@@ -110,7 +119,7 @@ export default function HomeScreen() {
           <IconTile name="trend" tint={TINT.indigo} size={44} />
           <View style={{ flex: 1, gap: 2 }}>
             <ThemedText type="small" themeColor="textSecondary">
-              Revenue · {period.phrase}
+              {t('dashboard.revenue', { period: phrase })}
             </ThemedText>
             {overview.data ? (
               <ThemedText
@@ -128,23 +137,43 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {services && jobs.data && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three }}>
+          <StatTile
+            icon="wrench"
+            tint={TINT.indigo}
+            label={t('dashboard.jobsActive')}
+            value={String(jobs.data.active)}
+            onPress={() => router.push(JOBS_TAB)}
+          />
+          <StatTile
+            icon="check"
+            tint={TINT.emerald}
+            label={t('dashboard.jobsReady')}
+            value={String(jobs.data.ready)}
+            onPress={() => router.push(JOBS_TAB)}
+          />
+          <StatTile icon="wallet" tint={TINT.amber} label={t('dashboard.advancesHeld')} value={formatCurrency(jobs.data.advancesHeld)} />
+          <StatTile icon="receipt" tint={TINT.sky} label={t('dashboard.deliveredToday')} value={String(jobs.data.deliveredToday)} />
+        </View>
+      )}
       {overview.data ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.three }}>
-          <StatTile icon="receipt" tint={TINT.emerald} label="Completed sales" value={String(overview.data.fulfilledOrders)} />
-          <StatTile icon="bag" tint={TINT.sky} label="All orders" value={String(overview.data.totalOrders)} />
+          <StatTile icon="receipt" tint={TINT.emerald} label={t('dashboard.completedSales')} value={String(overview.data.fulfilledOrders)} />
+          <StatTile icon="bag" tint={TINT.sky} label={t('dashboard.allOrders')} value={String(overview.data.totalOrders)} />
           <StatTile
             icon="alert"
             tint={lowStock > 0 ? TINT.rose : TINT.slate}
-            label="Low-stock items"
+            label={t('dashboard.lowStockItems')}
             value={String(lowStock)}
             alert={lowStock > 0}
             {...(lowStock > 0 &&
               canEditCatalog(active.role) && {
-                actionLabel: 'Reorder',
+                actionLabel: t('dashboard.reorder'),
                 onPress: () => router.push({ pathname: '/receive-stock', params: { reorder: '1' } }),
               })}
           />
-          <StatTile icon="team" tint={TINT.violet} label="Customers" value={String(overview.data.totalCustomers)} />
+          <StatTile icon="team" tint={TINT.violet} label={t('dashboard.customers')} value={String(overview.data.totalCustomers)} />
         </View>
       ) : (
         <View style={{ minHeight: 120 }}>
@@ -152,7 +181,7 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <Panel icon="trend" tint={TINT.indigo} title="Last 7 days">
+      <Panel icon="trend" tint={TINT.indigo} title={t('dashboard.last7Days')}>
         {chart.data ? (
           <RevenueBars data={chart.data} formatValue={formatCurrency} />
         ) : (
@@ -162,7 +191,7 @@ export default function HomeScreen() {
         )}
       </Panel>
 
-      <Panel icon="star" tint={TINT.amber} title={`Top sellers · ${period.phrase}`}>
+      <Panel icon="star" tint={TINT.amber} title={t('dashboard.topSellers', { period: phrase })}>
         {topProducts.data && topProducts.data.length > 0 ? (
           topProducts.data.map((p, i) => (
             <View
@@ -188,7 +217,7 @@ export default function HomeScreen() {
                   {p.name}
                 </ThemedText>
                 <ThemedText type="caption" themeColor="textSecondary">
-                  {p.totalQty} sold
+                  {t('dashboard.sold', { count: p.totalQty })}
                 </ThemedText>
               </View>
               <ThemedText type="smallBold" style={{ fontVariant: ['tabular-nums'] }}>
@@ -202,7 +231,7 @@ export default function HomeScreen() {
           <View style={{ alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.three }}>
             <Icon name="receipt" size={24} color={theme.textSecondary} />
             <ThemedText type="small" themeColor="textSecondary">
-              No completed sales {period.phrase}.
+              {t('dashboard.noSales', { period: phrase })}
             </ThemedText>
           </View>
         )}

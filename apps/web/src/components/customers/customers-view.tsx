@@ -103,9 +103,9 @@ function CustomerDetailPanel({ customerId, onClose, onEdit }: {
             <p className="text-2xl font-black text-slate-900 tabular-nums">{orderCount}</p>
             <p className="text-[11px] text-slate-400 font-semibold mt-0.5">{t("customers.orders")}</p>
           </div>
-          <div className="bg-indigo-50 rounded-xl p-3 text-center">
-            <p className="text-2xl font-black text-indigo-700 tabular-nums">{formatCurrency(totalSpent)}</p>
-            <p className="text-[11px] text-indigo-400 font-semibold mt-0.5">{t("customers.totalSpent")}</p>
+          <div className="bg-brand-50 rounded-xl p-3 text-center">
+            <p className="text-2xl font-black text-brand-700 tabular-nums">{formatCurrency(totalSpent)}</p>
+            <p className="text-[11px] text-brand-400 font-semibold mt-0.5">{t("customers.totalSpent")}</p>
           </div>
         </div>
 
@@ -235,7 +235,7 @@ function Field({ label, name, value, onChange, error, type = "text", placeholder
         onChange={onChange}
         aria-invalid={!!error}
         className={cn(
-          "w-full h-11 px-3 bg-white border rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors",
+          "w-full h-11 px-3 bg-white border rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors",
           error ? "border-red-300" : "border-slate-200"
         )}
       />
@@ -363,7 +363,7 @@ function CustomerFormPanel({ customerId, onClose }: { customerId?: string; onClo
             placeholder={t("customers.addressPlaceholder")}
             value={form.address}
             onChange={set("address")}
-            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
           />
         </div>
       </div>
@@ -375,7 +375,7 @@ function CustomerFormPanel({ customerId, onClose }: { customerId?: string; onClo
         <button
           onClick={handleSubmit}
           disabled={isPending}
-          className="flex-[2] h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+          className="flex-[2] h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
         >
           {isPending ? <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> : <><CheckCircle2 className="h-4 w-4" /> {isEdit ? t("common.saveChanges") : t("customers.addCustomerBtn")}</>}
         </button>
@@ -420,7 +420,7 @@ export function CustomersView() {
         </div>
         <button
           onClick={() => setPanel({ mode: "add" })}
-          className="flex items-center gap-2 h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-sm shadow-indigo-200 transition-all active:scale-[0.97] shrink-0"
+          className="flex items-center gap-2 h-10 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold shadow-sm shadow-brand-200 transition-all active:scale-[0.97] shrink-0"
         >
           <Plus className="h-4 w-4" /> {t("customers.addCustomer")}
         </button>
@@ -431,7 +431,7 @@ export function CustomersView() {
         <div className="grid grid-cols-3 gap-3 shrink-0">
           {[
             { label: t("customers.statTotal"),       value: customers.length,                                                           icon: Users,             color: "text-slate-900" },
-            { label: t("customers.statWithOrders"),  value: customers.filter((c) => c._count.orders > 0).length,                       icon: ShoppingBag,       color: "text-indigo-600" },
+            { label: t("customers.statWithOrders"),  value: customers.filter((c) => c._count.orders > 0).length,                       icon: ShoppingBag,       color: "text-brand-600" },
             { label: t("customers.statNew30d"),      value: customers.filter((c) => Date.now() - new Date(c.createdAt).getTime() < 2592000000).length, icon: UserPlus, color: "text-emerald-600" },
           ].map(({ label, value, icon: Icon, color }) => (
             <div key={label} className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm text-center">
@@ -453,7 +453,7 @@ export function CustomersView() {
           placeholder={t("customers.searchPlaceholder")}
           value={search}
           onChange={(e) => handleSearch(e.target.value)}
-          className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+          className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"
         />
         {search && (
           <button onClick={() => handleSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors">
@@ -461,7 +461,7 @@ export function CustomersView() {
           </button>
         )}
         {isFetching && !isLoading && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin" />
         )}
       </div>
 
@@ -489,10 +489,10 @@ export function CustomersView() {
               {search ? t("customers.noMatch", { query: search }) : t("customers.noCustomers")}
             </p>
             {search && (
-              <button onClick={() => handleSearch("")} className="text-xs text-indigo-600 mt-2.5 hover:underline font-semibold">{t("customers.clearSearch")}</button>
+              <button onClick={() => handleSearch("")} className="text-xs text-brand-600 mt-2.5 hover:underline font-semibold">{t("customers.clearSearch")}</button>
             )}
             {!search && (
-              <button onClick={() => setPanel({ mode: "add" })} className="mt-3 text-xs text-indigo-600 font-bold hover:underline flex items-center gap-1">
+              <button onClick={() => setPanel({ mode: "add" })} className="mt-3 text-xs text-brand-600 font-bold hover:underline flex items-center gap-1">
                 <Plus className="h-3 w-3" /> {t("customers.addFirst")}
               </button>
             )}
@@ -521,7 +521,7 @@ export function CustomersView() {
                       <tr
                         key={c.id}
                         onClick={() => setPanel({ mode: "detail", customerId: c.id })}
-                        className={cn("cursor-pointer transition-colors hover:bg-slate-50/70", isSelected && "bg-indigo-50/60")}
+                        className={cn("cursor-pointer transition-colors hover:bg-slate-50/70", isSelected && "bg-brand-50/60")}
                       >
                         <td className="px-5 py-3.5">
                           <div className="flex items-center gap-3">
@@ -536,7 +536,7 @@ export function CustomersView() {
                         <td className="px-5 py-3.5">
                           <span className={cn(
                             "inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full",
-                            c._count.orders > 0 ? "bg-indigo-50 text-indigo-700" : "bg-slate-100 text-slate-500"
+                            c._count.orders > 0 ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-500"
                           )}>
                             <ShoppingBag className="h-3 w-3" />
                             {c._count.orders}
@@ -560,7 +560,7 @@ export function CustomersView() {
                     onClick={() => setPanel({ mode: "detail", customerId: c.id })}
                     className={cn(
                       "w-full text-left px-4 py-3.5 bg-white rounded-2xl border shadow-sm flex items-center gap-3 transition-all active:scale-[0.98]",
-                      isSelected ? "border-indigo-300 ring-2 ring-inset ring-indigo-200" : "border-slate-100 hover:border-slate-200"
+                      isSelected ? "border-brand-300 ring-2 ring-inset ring-brand-200" : "border-slate-100 hover:border-slate-200"
                     )}
                   >
                     <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 font-bold text-slate-600">
@@ -575,7 +575,7 @@ export function CustomersView() {
                     <div className="text-right shrink-0">
                       <span className={cn(
                         "text-xs font-bold px-2 py-0.5 rounded-full",
-                        c._count.orders > 0 ? "bg-indigo-50 text-indigo-700" : "bg-slate-100 text-slate-500"
+                        c._count.orders > 0 ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-500"
                       )}>
                         {t("customers.ordersCount", { count: c._count.orders })}
                       </span>

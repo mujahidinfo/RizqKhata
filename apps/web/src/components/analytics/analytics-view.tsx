@@ -22,9 +22,9 @@ import {
 } from "recharts";
 
 const COLORS = [
-  "#6366f1",
+  "#17694C",
   "#f59e0b",
-  "#10b981",
+  "#6366f1",
   "#ef4444",
   "#8b5cf6",
   "#06b6d4",
@@ -118,8 +118,8 @@ export function AnalyticsView() {
                 <AreaChart data={salesChart ?? []}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#17694C" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#17694C" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid
@@ -135,7 +135,7 @@ export function AnalyticsView() {
                   <Area
                     type="monotone"
                     dataKey="revenue"
-                    stroke="#6366f1"
+                    stroke="#17694C"
                     fill="url(#revGrad)"
                     strokeWidth={2}
                   />
@@ -171,7 +171,7 @@ export function AnalyticsView() {
                   <Tooltip formatter={(v) => formatCurrency(v as number)} />
                   <Bar
                     dataKey="totalRevenue"
-                    fill="#6366f1"
+                    fill="#17694C"
                     radius={[0, 4, 4, 0]}
                   />
                 </BarChart>

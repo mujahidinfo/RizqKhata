@@ -25,7 +25,7 @@ const expenseCategoriesRouter = router({
   ),
 
   create: adminProcedure
-    .input(z.object({ name: z.string().min(1), color: z.string().default("#6366f1") }))
+    .input(z.object({ name: z.string().min(1), color: z.string().default("#17694C") }))
     .mutation(({ input, ctx }) =>
       ctx.api<ExpenseCategory>("/finance/expense-categories", { method: "POST", body: input }),
     ),

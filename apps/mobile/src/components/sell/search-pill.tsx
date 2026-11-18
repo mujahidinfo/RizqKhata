@@ -3,6 +3,7 @@ import { Pressable, TextInput, View } from 'react-native';
 import { Icon } from '@/components/icon';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 /** Rounded search field with a clear button. */
 export function SearchPill({
@@ -17,6 +18,7 @@ export function SearchPill({
   onFocus?: () => void;
 }) {
   const theme = useTheme();
+  const t = useT();
   return (
     <View
       style={{
@@ -44,7 +46,7 @@ export function SearchPill({
         style={{ flex: 1, fontSize: 16, color: theme.text, paddingVertical: 0 }}
       />
       {value.length > 0 && (
-        <Pressable accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={10} onPress={() => onChangeText('')}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.clearSearch')} hitSlop={10} onPress={() => onChangeText('')}>
           <Icon name="clear" size={17} color={theme.textSecondary} />
         </Pressable>
       )}

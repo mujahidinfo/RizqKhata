@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   daysQuerySchema,
   isoDate,
+  recordedAtSchema,
   paginationQuery,
   paymentMethodSchema,
 } from '../../common/utils.js';
@@ -129,6 +130,8 @@ export class PaySalaryDto extends createZodDto(
     paymentMethod: paymentMethodSchema.default('CASH'),
     month: monthSchema.optional(),
     note: z.string().trim().max(200).optional(),
+    // When it was paid (salaries recorded offline and synced later).
+    recordedAt: recordedAtSchema,
   }),
 ) {}
 

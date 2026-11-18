@@ -173,18 +173,18 @@ export function ReportsView() {
                     className={cn(
                       "flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all",
                       reportType === type
-                        ? "border-indigo-500 bg-indigo-50"
+                        ? "border-brand-500 bg-brand-50"
                         : "border-slate-200 hover:border-slate-300",
                     )}
                   >
                     <div className={cn(
                       "p-2 rounded-lg shrink-0",
-                      reportType === type ? "bg-indigo-100" : "bg-slate-100",
+                      reportType === type ? "bg-brand-100" : "bg-slate-100",
                     )}>
-                      <Icon className={cn("h-4 w-4", reportType === type ? "text-indigo-600" : "text-slate-500")} />
+                      <Icon className={cn("h-4 w-4", reportType === type ? "text-brand-600" : "text-slate-500")} />
                     </div>
                     <div>
-                      <p className={cn("text-sm font-semibold", reportType === type ? "text-indigo-700" : "text-slate-700")}>
+                      <p className={cn("text-sm font-semibold", reportType === type ? "text-brand-700" : "text-slate-700")}>
                         {t(cfg.labelKey)}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">{t(cfg.descKey)}</p>

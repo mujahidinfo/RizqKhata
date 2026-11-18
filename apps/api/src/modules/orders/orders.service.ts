@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import type { Prisma } from '@genpos/db';
 import type { TenantContext } from '../../common/types.js';
-import { generateOrderNumber, round2 } from '../../common/utils.js';
+import { generateOrderNumber, recordedAtOrNow, round2 } from '../../common/utils.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type {
   CreateOrderDto,
@@ -70,10 +70,20 @@ export class OrdersService {
     return order;
   }
 
+  /**
+   * @param options.depositApplied advance already paid (service jobs); shown on
+   *   the receipt and deducted from what's due.
+   * @param options.inTransaction runs inside the order's transaction, so e.g.
+   *   marking a job delivered commits together with the sale.
+   */
   async create(
     tenant: TenantContext,
     input: CreateOrderDto,
     cashierId: string,
+    options: {
+      depositApplied?: number;
+      inTransaction?: (tx: Prisma.TransactionClient, orderId: string) => Promise<void>;
+    } = {},
   ) {
     const [shop, products] = await Promise.all([
       this.prisma.shop.findUniqueOrThrow({ where: { id: tenant.shopId } }),
@@ -91,6 +101,7 @@ export class OrdersService {
       });
       if (!customer) throw new BadRequestException('Unknown customer');
     }
+    const allowNegativeStock = shop.allowNegativeStock || input.recordedOffline;
 
     // Every line sells a concrete variant so stock always moves.
     const lines = input.items.map((item) => {
@@ -106,7 +117,7 @@ export class OrdersService {
       if (!variantId) {
         throw new BadRequestException(`Choose a variant for ${item.name}`);
       }
-      return { ...item, variantId };
+      return { ...item, variantId, isService: product.kind === 'SERVICE' };
     });
 
     const subtotal = lines.reduce((s, i) => s + i.price * i.quantity, 0);
@@ -122,11 +133,15 @@ export class OrdersService {
     const taxAmt = round2(taxableAmount * (input.taxRate / 100));
     const total = round2(taxableAmount + taxAmt);
 
+    const createdAt = recordedAtOrNow(input.recordedAt);
+
     // Stock deduction and order creation succeed or fail together.
     return this.prisma.$transaction(async (tx) => {
       for (const line of lines) {
+        // Services aren't stocked: nothing to take off the shelf.
+        if (line.isService) continue;
         const key = { shopId: tenant.shopId, variantId: line.variantId };
-        if (shop.allowNegativeStock) {
+        if (allowNegativeStock) {
           // Never block a sale at the counter; a negative count flags a recount.
           await tx.inventory.upsert({
             where: { shopId_variantId: key },
@@ -151,18 +166,24 @@ export class OrdersService {
             productId: line.productId,
             type: 'OUT',
             quantity: line.quantity,
-            note: 'Sale',
+            note: input.recordedOffline ? 'Sale (recorded offline)' : 'Sale',
+            createdAt,
           },
         });
       }
 
-      return tx.order.create({
+      const customerId = input.customer
+        ? (await this.findOrCreateCustomer(tx, tenant, input.customer)).id
+        : input.customerId;
+      const order = await tx.order.create({
         data: {
           orderNumber: generateOrderNumber(),
+          createdAt,
+          depositApplied: options.depositApplied ?? 0,
           businessId: tenant.businessId,
           shopId: tenant.shopId,
           cashierId,
-          customerId: input.customerId,
+          customerId,
           type: input.type,
           status: input.status,
           subtotal,
@@ -194,7 +215,21 @@ export class OrdersService {
           refunds: true,
         },
       });
+      if (options.inTransaction) await options.inTransaction(tx, order.id);
+      return order;
     });
+  }
+
+  /** Same rule as CustomersService.findOrCreate: one customer per phone per business. */
+  private async findOrCreateCustomer(
+    tx: Prisma.TransactionClient,
+    tenant: TenantContext,
+    input: { phone: string; name: string },
+  ) {
+    const existing = await tx.customer.findFirst({
+      where: { businessId: tenant.businessId, phone: input.phone },
+    });
+    return existing ?? tx.customer.create({ data: { ...input, businessId: tenant.businessId } });
   }
 
   updateStatus(

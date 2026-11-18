@@ -30,7 +30,7 @@ import {
 import type { AuthUser } from "@/lib/auth";
 import Link from "next/link";
 
-const CATEGORY_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+const CATEGORY_COLORS = ["#17694C", "#6366f1", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
 function getGreetingKey() {
   const h = new Date().getHours();
@@ -121,8 +121,8 @@ export function DashboardOverview({ user }: { user: AuthUser }) {
       value: String(overview?.totalOrders ?? 0),
       sub: t("dashboard.last30Days"),
       icon: ShoppingCart,
-      iconColor: "text-indigo-600",
-      iconBg: "bg-indigo-50",
+      iconColor: "text-brand-600",
+      iconBg: "bg-brand-50",
     },
     {
       label: t("dashboard.products"),
@@ -157,7 +157,7 @@ export function DashboardOverview({ user }: { user: AuthUser }) {
         </div>
         <Link
           href="/sales"
-          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors duration-150 shrink-0 shadow-sm shadow-indigo-200"
+          className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors duration-150 shrink-0 shadow-sm shadow-brand-200"
         >
           <Plus className="h-4 w-4" />
           {t("dashboard.newSale")}
@@ -211,8 +211,8 @@ export function DashboardOverview({ user }: { user: AuthUser }) {
             <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -10 }}>
               <defs>
                 <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.12} />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#17694C" stopOpacity={0.12} />
+                  <stop offset="100%" stopColor="#17694C" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="2 4" stroke="#f1f5f9" vertical={false} />
@@ -232,11 +232,11 @@ export function DashboardOverview({ user }: { user: AuthUser }) {
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#6366f1"
+                stroke="#17694C"
                 fill="url(#revGrad)"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: "#6366f1", strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: "#17694C", strokeWidth: 0 }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -306,7 +306,7 @@ export function DashboardOverview({ user }: { user: AuthUser }) {
           </div>
           <Link
             href="/analytics"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group"
+            className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1 group"
           >
             {t("common.viewAll")}
             <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
@@ -321,7 +321,7 @@ export function DashboardOverview({ user }: { user: AuthUser }) {
             <p className="text-sm font-medium text-slate-400">{t("dashboard.noSalesYet")}</p>
             <Link
               href="/sales"
-              className="text-xs text-indigo-600 font-semibold mt-2 hover:underline inline-flex items-center gap-1"
+              className="text-xs text-brand-600 font-semibold mt-2 hover:underline inline-flex items-center gap-1"
             >
               <Plus className="h-3 w-3" />
               {t("dashboard.makeFirstSale")}
@@ -347,7 +347,7 @@ export function DashboardOverview({ user }: { user: AuthUser }) {
                     <div className="flex items-center gap-2.5">
                       <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-indigo-500 rounded-full transition-all duration-700"
+                          className="h-full bg-brand-500 rounded-full transition-all duration-700"
                           style={{ width: `${pct}%` }}
                         />
                       </div>

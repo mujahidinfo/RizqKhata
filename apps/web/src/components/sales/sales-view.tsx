@@ -90,7 +90,7 @@ function PriceInput({ value, onCommit, symbol, belowCost, ariaLabel }: {
           "w-24 h-9 pl-6 pr-2 rounded-lg border bg-white text-sm font-bold tabular-nums text-right transition-colors focus:outline-none focus:ring-2",
           belowCost
             ? "border-amber-300 text-amber-700 focus:ring-amber-400"
-            : "border-slate-200 text-slate-900 focus:ring-indigo-500"
+            : "border-slate-200 text-slate-900 focus:ring-brand-500"
         )}
       />
     </div>
@@ -151,8 +151,8 @@ function CartContent({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center">
-            <ShoppingCart className="h-4 w-4 text-indigo-600" />
+          <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
+            <ShoppingCart className="h-4 w-4 text-brand-600" />
           </div>
           <div>
             <p className="text-sm font-bold text-slate-900 leading-none">{t("sales.currentSale")}</p>
@@ -230,7 +230,7 @@ function CartContent({
                         onClick={() => onUpdatePrice(idx, item.listPrice)}
                         title={t("sales.resetPrice")}
                         aria-label={t("sales.resetPrice")}
-                        className="flex items-center gap-1 h-9 px-2 rounded-lg text-[10px] font-semibold text-slate-400 hover:text-indigo-600 hover:bg-white transition-colors shrink-0"
+                        className="flex items-center gap-1 h-9 px-2 rounded-lg text-[10px] font-semibold text-slate-400 hover:text-brand-600 hover:bg-white transition-colors shrink-0"
                       >
                         <RotateCcw className="h-3 w-3 shrink-0" />
                         <span className="tabular-nums whitespace-nowrap hidden sm:inline">
@@ -254,7 +254,7 @@ function CartContent({
                       <button
                         onClick={() => onUpdateQty(idx, 1)}
                         aria-label={t("sales.increaseQty")}
-                        className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:border-indigo-300 hover:text-indigo-600 active:scale-95 transition-all"
+                        className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:border-brand-300 hover:text-brand-600 active:scale-95 transition-all"
                       >
                         <Plus className="h-3 w-3" />
                       </button>
@@ -282,39 +282,39 @@ function CartContent({
           {!showDiscount ? (
             <button
               onClick={() => { onSetShowDiscount(true); onSetDiscountType("percentage"); }}
-              className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-indigo-600 transition-colors py-1 group"
+              className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-brand-600 transition-colors py-1 group"
             >
-              <Tag className="h-3.5 w-3.5 group-hover:text-indigo-500 transition-colors" />
+              <Tag className="h-3.5 w-3.5 group-hover:text-brand-500 transition-colors" />
               {t("sales.addDiscount")}
             </button>
           ) : (
-            <div className="bg-indigo-50 rounded-xl p-3 space-y-2.5">
+            <div className="bg-brand-50 rounded-xl p-3 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-indigo-700 flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-brand-700 flex items-center gap-1.5">
                   <Tag className="h-3 w-3" />
                   {t("common.discount")}
                 </span>
                 <button
                   onClick={() => { onSetShowDiscount(false); onSetDiscountType("none"); onSetDiscountValue(0); }}
-                  className="text-xs text-indigo-400 hover:text-indigo-700 font-semibold transition-colors"
+                  className="text-xs text-brand-400 hover:text-brand-700 font-semibold transition-colors"
                 >
                   {t("common.remove")}
                 </button>
               </div>
               <div className="flex gap-2">
-                <div className="flex rounded-xl overflow-hidden border border-indigo-200 bg-white shrink-0">
+                <div className="flex rounded-xl overflow-hidden border border-brand-200 bg-white shrink-0">
                   <button
                     onClick={() => onSetDiscountType("percentage")}
                     className={cn(
                       "w-10 h-10 text-xs font-bold transition-colors",
-                      discountType === "percentage" ? "bg-indigo-600 text-white" : "text-indigo-500 hover:bg-indigo-50"
+                      discountType === "percentage" ? "bg-brand-600 text-white" : "text-brand-500 hover:bg-brand-50"
                     )}
                   >%</button>
                   <button
                     onClick={() => onSetDiscountType("fixed")}
                     className={cn(
-                      "w-10 h-10 text-xs font-bold transition-colors border-l border-indigo-200",
-                      discountType === "fixed" ? "bg-indigo-600 text-white" : "text-indigo-500 hover:bg-indigo-50"
+                      "w-10 h-10 text-xs font-bold transition-colors border-l border-brand-200",
+                      discountType === "fixed" ? "bg-brand-600 text-white" : "text-brand-500 hover:bg-brand-50"
                     )}
                   >$</button>
                 </div>
@@ -326,7 +326,7 @@ function CartContent({
                   value={discountValue || ""}
                   placeholder="0"
                   onChange={(e) => onSetDiscountValue(parseFloat(e.target.value) || 0)}
-                  className="flex-1 h-10 px-3 bg-white border border-indigo-200 rounded-xl text-sm text-right font-semibold text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 h-10 px-3 bg-white border border-brand-200 rounded-xl text-sm text-right font-semibold text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
             </div>
@@ -347,7 +347,7 @@ function CartContent({
                 placeholder={t("sales.phonePlaceholder")}
                 value={customerPhone}
                 onChange={(e) => onCustomerPhoneChange(e.target.value)}
-                className="w-full h-10 pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+                className="w-full h-10 pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors"
               />
               {customerPhone && (
                 <button onClick={onClearCustomer} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-slate-200 text-slate-500 hover:bg-slate-300 transition-colors">
@@ -454,10 +454,10 @@ function CartContent({
               isSuccess
                 ? "bg-emerald-500 text-white shadow-sm shadow-emerald-100"
                 : isPending
-                  ? "bg-indigo-400 text-white cursor-wait"
+                  ? "bg-brand-400 text-white cursor-wait"
                   : !cart.length
                     ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200"
+                    : "bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-200"
             )}
           >
             {isSuccess ? (
@@ -549,7 +549,7 @@ function InvoiceModal({
                 </div>
                 <div>
                   <p className="font-black text-base leading-tight">
-                    {shop?.name ?? "GenPOS"}
+                    {shop?.name ?? "Rizq Khata"}
                   </p>
                   <p className="text-white/50 text-xs mt-0.5">{t("sales.invoicePreview")}</p>
                 </div>
@@ -696,8 +696,8 @@ function InvoiceModal({
               className={cn(
                 "flex-[2] h-12 rounded-xl text-sm font-bold flex items-center justify-center gap-2.5 transition-all active:scale-[0.98]",
                 isPending
-                  ? "bg-indigo-400 text-white cursor-wait"
-                  : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200"
+                  ? "bg-brand-400 text-white cursor-wait"
+                  : "bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-200"
               )}
             >
               {isPending ? (
@@ -907,7 +907,7 @@ export function SalesView() {
             placeholder={t("sales.searchProducts")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-12 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
+            className="w-full h-12 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent shadow-sm"
           />
           {search && (
             <button
@@ -973,14 +973,14 @@ export function SalesView() {
                     outOfStock
                       ? "opacity-40 cursor-not-allowed border-slate-100 shadow-none"
                       : inCart
-                        ? "border-indigo-300 shadow-lg shadow-indigo-50 ring-2 ring-inset ring-indigo-200"
+                        ? "border-brand-300 shadow-lg shadow-brand-50 ring-2 ring-inset ring-brand-200"
                         : "border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 cursor-pointer active:scale-[0.96]",
-                    isFlashing && !outOfStock && "bg-indigo-50 scale-[0.97]"
+                    isFlashing && !outOfStock && "bg-brand-50 scale-[0.97]"
                   )}
                 >
                   {/* In-cart badge */}
                   {inCart && (
-                    <span className="absolute -top-2 -right-2 w-6 h-6 bg-indigo-600 text-white text-[11px] font-black rounded-full flex items-center justify-center shadow-md z-10 select-none">
+                    <span className="absolute -top-2 -right-2 w-6 h-6 bg-brand-600 text-white text-[11px] font-black rounded-full flex items-center justify-center shadow-md z-10 select-none">
                       {cartQty}
                     </span>
                   )}
@@ -988,7 +988,7 @@ export function SalesView() {
                   {/* Image / icon area */}
                   <div className={cn(
                     "relative h-12 rounded-xl flex items-center justify-center mb-3 overflow-hidden transition-colors duration-200",
-                    inCart ? "bg-indigo-100" : "bg-slate-50"
+                    inCart ? "bg-brand-100" : "bg-slate-50"
                   )}>
                     {product.imageUrl ? (
                       <Image
@@ -1002,7 +1002,7 @@ export function SalesView() {
                     ) : (
                       <Package className={cn(
                         "h-5 w-5 transition-colors duration-200",
-                        inCart ? "text-indigo-500" : "text-slate-300"
+                        inCart ? "text-brand-500" : "text-slate-300"
                       )} />
                     )}
                   </div>
@@ -1018,7 +1018,7 @@ export function SalesView() {
                   <div className="flex items-center justify-between gap-1 mt-auto">
                     <span className={cn(
                       "text-sm font-black tabular-nums transition-colors",
-                      inCart ? "text-indigo-600" : "text-slate-900"
+                      inCart ? "text-brand-600" : "text-slate-900"
                     )}>
                       {formatCurrency(product.price)}
                     </span>
@@ -1046,7 +1046,7 @@ export function SalesView() {
                 {search && (
                   <button
                     onClick={() => setSearch("")}
-                    className="text-xs text-indigo-600 mt-2.5 hover:underline font-semibold"
+                    className="text-xs text-brand-600 mt-2.5 hover:underline font-semibold"
                   >
                     {t("sales.clearSearch")}
                   </button>
@@ -1076,13 +1076,13 @@ export function SalesView() {
       >
         <button
           onClick={() => setCartOpen(true)}
-          className="w-full flex items-center justify-between bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-4 rounded-2xl shadow-xl shadow-indigo-300/40 active:scale-[0.98] transition-all"
+          className="w-full flex items-center justify-between bg-brand-600 hover:bg-brand-700 text-white px-5 py-4 rounded-2xl shadow-xl shadow-brand-300/40 active:scale-[0.98] transition-all"
         >
           <div className="flex items-center gap-3">
             <div className="relative shrink-0">
               <ShoppingCart className="h-5 w-5" />
               {totalItems > 0 && (
-                <span className="absolute -top-2.5 -right-2.5 w-5 h-5 bg-white text-indigo-600 text-[10px] font-black rounded-full flex items-center justify-center shadow-sm select-none">
+                <span className="absolute -top-2.5 -right-2.5 w-5 h-5 bg-white text-brand-600 text-[10px] font-black rounded-full flex items-center justify-center shadow-sm select-none">
                   {totalItems}
                 </span>
               )}

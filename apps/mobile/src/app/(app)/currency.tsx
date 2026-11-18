@@ -10,10 +10,12 @@ import { ThemedText } from '@/components/themed-text';
 import { CURRENCIES } from '@/constants/currencies';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 /** Pick the currency prices are shown in. Prices already entered are not converted. */
 export default function CurrencyScreen() {
   const theme = useTheme();
+  const t = useT();
   const { data: shop } = useShop();
   const update = useUpdateShop();
   const [search, setSearch] = useState('');
@@ -32,7 +34,7 @@ export default function CurrencyScreen() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not change the currency.');
+      setError(e instanceof Error ? e.message : t('currency.couldNotChange'));
     }
   };
 
@@ -42,10 +44,10 @@ export default function CurrencyScreen() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search currency"
+          placeholder={t('currency.search')}
           placeholderTextColor={theme.textSecondary}
           autoCorrect={false}
-          accessibilityLabel="Search currency"
+          accessibilityLabel={t('currency.search')}
           style={{
             minHeight: 46,
             paddingHorizontal: Spacing.three,
@@ -57,7 +59,7 @@ export default function CurrencyScreen() {
           }}
         />
         <ThemedText type="caption" themeColor="textSecondary">
-          Existing prices aren’t converted — only how amounts are shown changes.
+          {t('currency.notConverted')}
         </ThemedText>
         {error && (
           <ThemedText type="small" themeColor="danger" accessibilityLiveRegion="polite">

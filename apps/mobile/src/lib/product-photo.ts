@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -40,12 +41,22 @@ export async function pickProductPhoto(source: PhotoSource, maxWidth = MAX_WIDTH
   return saved.uri;
 }
 
+/**
+ * Multipart body with the photo as `file`. Since SDK 58 the global `fetch` is
+ * `expo/fetch`, which can't send React Native's `{ uri, name, type }` file
+ * descriptors (it throws before the request leaves the phone). An expo-file-system
+ * `File` works: it carries its name, MIME type (from the .jpg extension the
+ * picker saves with) and bytes.
+ */
+function photoForm(uri: string): FormData {
+  const form = new FormData();
+  form.append('file', new File(uri) as unknown as Blob);
+  return form;
+}
+
 /** Upload a local photo through the API (stored on UploadThing); returns its URL. */
 export async function uploadProductPhoto(uri: string): Promise<string> {
-  const form = new FormData();
-  // React Native's FormData accepts a { uri, name, type } file descriptor.
-  form.append('file', { uri, name: 'product.jpg', type: 'image/jpeg' } as unknown as Blob);
-  const { url } = await api<{ url: string }>('/uploads/product-image', { method: 'POST', body: form });
+  const { url } = await api<{ url: string }>('/uploads/product-image', { method: 'POST', body: photoForm(uri) });
   return url;
 }
 
@@ -54,9 +65,7 @@ export const AVATAR_WIDTH = 512;
 
 /** Upload a local photo as the signed-in user's profile picture; returns its URL. */
 export async function uploadAvatarPhoto(uri: string): Promise<string> {
-  const form = new FormData();
-  form.append('file', { uri, name: 'avatar.jpg', type: 'image/jpeg' } as unknown as Blob);
-  const { url } = await api<{ url: string }>('/uploads/avatar', { method: 'POST', body: form });
+  const { url } = await api<{ url: string }>('/uploads/avatar', { method: 'POST', body: photoForm(uri) });
   return url;
 }
 

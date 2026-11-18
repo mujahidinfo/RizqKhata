@@ -1,12 +1,11 @@
 import { useShop } from '@/api/queries';
+import { getLanguage, localeFor, translate, useLanguage, type Translator } from '@/lib/i18n';
 
-/**
- * Same locale rule as apps/web (lib/currency-context.tsx): Bangla shops get bn-BD
- * so BDT renders as ৳, with `-u-nu-latn` forcing Western digits at the till.
+/*
+ * Same locale rule as apps/web (lib/currency-context.tsx): Bangla gets bn-BD so
+ * BDT renders as ৳ and dates use Bangla month names, with `-u-nu-latn` keeping
+ * Western digits at the till. Dates follow the app language (lib/i18n).
  */
-function localeFor(language: string | undefined) {
-  return language === 'bn' ? 'bn-BD-u-nu-latn' : 'en-US';
-}
 
 function makeFormatter(locale: string, currency: string) {
   try {
@@ -20,12 +19,21 @@ function makeFormatter(locale: string, currency: string) {
 /** Exact money formatting for the shop's currency. */
 export function useFormatCurrency() {
   const { data: shop } = useShop();
-  const formatter = makeFormatter(localeFor(shop?.language), shop?.currency ?? 'BDT');
+  const language = useLanguage();
+  const formatter = makeFormatter(localeFor(language), shop?.currency ?? 'BDT');
   return (amount: number) => formatter.format(amount);
 }
 
-export function formatDateTime(iso: string) {
-  return new Date(iso).toLocaleString('en-US', {
+/*
+ * The date helpers take the component's `t` (from useT) as an optional last
+ * argument: it carries the language, so a language switch re-runs them instead
+ * of reusing a memoized result in the old language.
+ */
+type Lang = Pick<Translator, 'language'> | undefined;
+const langOf = (tr: Lang) => tr?.language ?? getLanguage();
+
+export function formatDateTime(iso: string, tr?: Lang) {
+  return new Date(iso).toLocaleString(localeFor(langOf(tr)), {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -33,16 +41,17 @@ export function formatDateTime(iso: string) {
   });
 }
 
-export function formatRelativeDay(iso: string) {
+export function formatRelativeDay(iso: string, tr?: Lang) {
+  const language = langOf(tr);
   const date = new Date(iso);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const time = date.toLocaleTimeString(localeFor(language), { hour: 'numeric', minute: '2-digit' });
 
-  if (date.toDateString() === today.toDateString()) return `Today, ${time}`;
-  if (date.toDateString() === yesterday.toDateString()) return `Yesterday, ${time}`;
-  return formatDateTime(iso);
+  if (date.toDateString() === today.toDateString()) return translate(language, 'format.todayAt', { time });
+  if (date.toDateString() === yesterday.toDateString()) return translate(language, 'format.yesterdayAt', { time });
+  return formatDateTime(iso, { language });
 }
 
 export const totalStock = (variants: { stock: number }[]) =>
@@ -52,23 +61,24 @@ export const isLowStock = (variants: { stock: number; lowStock: number }[]) =>
   variants.some((v) => v.stock <= v.lowStock);
 
 /** "Today", "Yesterday" or "Mon, 27 Oct" — for headings that group a list by day. */
-export function formatDayLabel(iso: string) {
+export function formatDayLabel(iso: string, tr?: Lang) {
+  const language = langOf(tr);
   const date = new Date(iso);
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
-  if (date.toDateString() === today.toDateString()) return 'Today';
-  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+  if (date.toDateString() === today.toDateString()) return translate(language, 'common.today');
+  if (date.toDateString() === yesterday.toDateString()) return translate(language, 'common.yesterday');
+  return date.toLocaleDateString(localeFor(language), { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 /** "Due today", "Due in 3 days", "2 days overdue" from a day count (negative = overdue). */
-export function dueLabel(daysUntil: number) {
-  if (daysUntil === 0) return 'Due today';
-  if (daysUntil === 1) return 'Due tomorrow';
-  if (daysUntil > 1) return `Due in ${daysUntil} days`;
-  const late = -daysUntil;
-  return `${late} day${late === 1 ? '' : 's'} overdue`;
+export function dueLabel(daysUntil: number, tr?: Lang) {
+  const language = langOf(tr);
+  if (daysUntil === 0) return translate(language, 'format.dueToday');
+  if (daysUntil === 1) return translate(language, 'format.dueTomorrow');
+  if (daysUntil > 1) return translate(language, 'format.dueIn', { count: daysUntil });
+  return translate(language, 'format.overdue', { count: -daysUntil });
 }
 
 /** Local noon on the given offset from today, as ISO — noon so the date never shifts across time zones. */

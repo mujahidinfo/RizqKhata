@@ -21,6 +21,7 @@ User ──Membership(role, optional shopId)──▶ Business ──▶ Shop (b
 - **Business** = the SaaS account. Catalog, customers, employees and expense categories are shared by all its branches.
 - **Shop** = a branch/outlet. Stock (`Inventory`), stock movements, orders, expenses and budgets belong to one branch.
 - Every tenant route resolves the active branch from the **`X-Shop-Id`** header (`TenantGuard`). A user with exactly one branch may omit it. Membership is checked on every request, so other businesses' data is unreachable.
+- Writes may send an **`Idempotency-Key`** header (8–100 chars of `A-Z a-z 0-9 - _`). The first request runs; repeats with the same key return the stored response with `Idempotent-Replayed: true` (409 while the first is still running, 422 if the key was used for a different endpoint). The mobile app uses this to sync records saved offline without duplicates; such records may also carry `recordedAt` (when it really happened).
 - Roles: `OWNER` · `MANAGER` · `CASHIER` · `INVENTORY_MANAGER`. A membership with `shopId` is pinned to that branch.
 - `allowNegativeStock` (per branch, default **on**): a sale is never blocked at the counter; stock goes negative and shows as low/out for a recount. Turn off to block oversells.
 
@@ -42,15 +43,17 @@ Access token: JWT (`JWT_ACCESS_TTL`, default 15m). Refresh token: opaque, stored
 | Resource | Routes | Roles |
 |---|---|---|
 | businesses | `GET /businesses` (my businesses + branches), `POST /businesses` (onboarding: business + first branch) | any signed-in user, no `X-Shop-Id` |
-| shops | `GET /shops`, `POST /shops` (add branch) | add: OWNER |
+| shops | `GET /shops`, `POST /shops` (add branch), `DELETE /shops/:id` (soft-close a branch; refused for the last branch or while staff are pinned to it) | add, delete: OWNER |
 | shop | `GET /shop` (active branch + business currency/language/role), `PUT /shop`, `PATCH /shop/language` | writes: OWNER, MANAGER |
 | members | `GET /members`, `POST /members` (add staff, optional `shopId`; optional `salary` + `payDay` puts them on payroll), `PATCH /members/:id` (`salary: null` takes them off payroll) | OWNER, MANAGER |
 | categories | `GET/POST /categories`, `PATCH/DELETE /categories/:id` | writes: catalog editors |
 | products | `GET /products?search&categoryId&lowStock&page&pageSize`, `GET /products/:id`, `GET /products/barcode/:code`, `POST /products`, `PATCH/DELETE /products/:id`, `POST /products/:id/stock` | writes: catalog editors |
-| customers | `GET /customers?search`, `GET /customers/lookup?phone`, `GET/PATCH /customers/:id`, `POST /customers`, `POST /customers/find-or-create`, `DELETE /customers/:id` | delete: OWNER, MANAGER |
+| customers | `GET /customers?search` (with `totalSpent`, `lastOrderAt`), `GET /customers/:id` adds `stats` + latest 30 orders across branches, `GET /customers/lookup?phone`, `GET/PATCH /customers/:id`, `POST /customers`, `POST /customers/find-or-create`, `DELETE /customers/:id` | delete: OWNER, MANAGER |
 | orders | `GET /orders?…`, `GET /orders/:id`, `POST /orders`, `PATCH /orders/:id/status`, `POST /orders/:id/refunds` | refunds: OWNER, MANAGER |
 | analytics | `GET /analytics/{overview,sales-chart,top-products,revenue-by-category}?days` | any |
 | suppliers | `GET /suppliers` (with `totalPurchased`/`totalPaid`/`due`), `GET/PATCH /suppliers/:id`, `POST /suppliers`, `POST /suppliers/:id/payments` | catalog editors; payments: OWNER, MANAGER |
+| notes | `GET /notes?search&status=open` or `=done` (yours + shared), `GET/PATCH/DELETE /notes/:id`, `POST /notes` (optional `recordedAt`) | any role; only the author shares/unshares; delete: author, or OWNER/MANAGER for shared notes |
+| jobs | `GET /jobs?status=ACTIVE` (or a status) `&search`, `GET /jobs/summary`, `GET/PATCH /jobs/:id` (PATCH `lines` replaces services & parts), `POST /jobs` (customer by id or `{ phone, name }`, `recordedAt`), `POST /jobs/:id/status`, `POST /jobs/:id/notes`, `POST /jobs/:id/deliver` (bills as a normal order, advance deducted, job → DELIVERED) | any role |
 | purchases | `GET /purchases?supplierId`, `GET /purchases/:id`, `POST /purchases` (receive stock into the active branch), `GET /purchases/reorder?supplierId` (low-stock items + usual supplier, last cost, suggested qty) | catalog editors |
 | uploads | `POST /uploads/product-image` (multipart `file`, ≤ 4 MB JPEG/PNG/WebP) → `{ url }` on UploadThing; needs `UPLOADTHING_TOKEN` | catalog editors |
 | uploads | `POST /uploads/avatar` (same multipart `file`) sets your profile photo and returns `{ url }`; `DELETE /uploads/avatar` removes it | any signed-in user (no `X-Shop-Id`) |

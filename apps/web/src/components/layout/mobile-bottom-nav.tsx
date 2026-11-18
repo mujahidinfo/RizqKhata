@@ -59,18 +59,18 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
                 className="relative flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
               >
                 {active && (
-                  <span className="absolute top-1.5 h-1 w-4 rounded-full bg-indigo-600" />
+                  <span className="absolute top-1.5 h-1 w-4 rounded-full bg-brand-600" />
                 )}
                 <Icon
                   className={cn(
                     "h-5 w-5 transition-colors",
-                    active ? "text-indigo-600" : "text-slate-400",
+                    active ? "text-brand-600" : "text-slate-400",
                   )}
                 />
                 <span
                   className={cn(
                     "text-[10px] font-medium leading-none transition-colors",
-                    active ? "text-indigo-600" : "text-slate-500",
+                    active ? "text-brand-600" : "text-slate-500",
                   )}
                 >
                   {t(item.labelKey)}
@@ -85,18 +85,18 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
               className="relative flex flex-col items-center justify-center gap-1 active:scale-95 transition-transform"
             >
               {moreActive && (
-                <span className="absolute top-1.5 h-1 w-4 rounded-full bg-indigo-600" />
+                <span className="absolute top-1.5 h-1 w-4 rounded-full bg-brand-600" />
               )}
               <MoreHorizontal
                 className={cn(
                   "h-5 w-5 transition-colors",
-                  moreActive ? "text-indigo-600" : "text-slate-400",
+                  moreActive ? "text-brand-600" : "text-slate-400",
                 )}
               />
               <span
                 className={cn(
                   "text-[10px] font-medium leading-none transition-colors",
-                  moreActive ? "text-indigo-600" : "text-slate-500",
+                  moreActive ? "text-brand-600" : "text-slate-500",
                 )}
               >
                 {t("nav.more")}
@@ -139,7 +139,7 @@ export function MobileBottomNav({ user }: MobileBottomNavProps) {
                     className={cn(
                       "flex flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-xs font-medium transition-colors",
                       active
-                        ? "bg-indigo-50 text-indigo-600"
+                        ? "bg-brand-50 text-brand-600"
                         : "text-slate-500 hover:bg-slate-50",
                     )}
                   >

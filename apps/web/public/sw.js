@@ -1,5 +1,5 @@
 /*
- * GenPOS service worker.
+ * Rizq Khata service worker.
  *
  * Deliberately conservative. This app shows per-user financial data behind a
  * session cookie, so the cache is limited to versioned build output and static

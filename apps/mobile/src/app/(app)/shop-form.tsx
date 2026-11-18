@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useActiveShop, useSession } from '@/lib/session';
+import { useT } from '@/lib/i18n';
 
 /** Edit the shop's name, phone, address and email (shown on receipts). */
 export default function ShopFormScreen() {
@@ -23,6 +24,7 @@ export default function ShopFormScreen() {
 
 function ShopForm({ shop }: { shop: Shop }) {
   const theme = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const active = useActiveShop();
   const { workspaces, refreshWorkspaces } = useSession();
@@ -55,7 +57,7 @@ function ShopForm({ shop }: { shop: Shop }) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the shop details.');
+      setError(e instanceof Error ? e.message : t('shopForm.couldNotSave'));
     }
   };
 
@@ -64,11 +66,23 @@ function ShopForm({ shop }: { shop: Shop }) {
       style={{ flex: 1, backgroundColor: theme.background }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: Spacing.four, gap: Spacing.three }}>
-        <TextField label="Shop name" value={name} onChangeText={setName} autoCapitalize="words" returnKeyType="next" />
-        <TextField label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" placeholder="Printed on receipts" />
-        <TextField label="Address" value={address} onChangeText={setAddress} placeholder="Street, area, city" multiline />
+        <TextField label={t('profile.shopName')} value={name} onChangeText={setName} autoCapitalize="words" returnKeyType="next" />
         <TextField
-          label="Email (optional)"
+          label={t('profile.phone')}
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+          placeholder={t('shopForm.phonePlaceholder')}
+        />
+        <TextField
+          label={t('profile.address')}
+          value={address}
+          onChangeText={setAddress}
+          placeholder={t('shopForm.addressPlaceholder')}
+          multiline
+        />
+        <TextField
+          label={t('shopForm.email')}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
@@ -76,7 +90,7 @@ function ShopForm({ shop }: { shop: Shop }) {
         />
         {!emailOk && (
           <ThemedText type="caption" themeColor="danger">
-            That email doesn’t look right.
+            {t('shopForm.badEmail')}
           </ThemedText>
         )}
         {error && (
@@ -93,7 +107,7 @@ function ShopForm({ shop }: { shop: Shop }) {
           borderColor: theme.border,
           backgroundColor: theme.backgroundElement,
         }}>
-        <Button title="Save" onPress={submit} loading={update.isPending} disabled={!valid} />
+        <Button title={t('common.save')} onPress={submit} loading={update.isPending} disabled={!valid} />
       </View>
     </KeyboardAvoidingView>
   );

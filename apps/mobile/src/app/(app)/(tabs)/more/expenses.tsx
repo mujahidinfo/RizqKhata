@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from 'react-native';
 
 import { useExpenses, useFinanceOverview, useUpcoming } from '@/api/queries';
-import type { Expense, ExpenseSource, PaymentMethod } from '@/api/types';
+import type { Expense, ExpenseSource } from '@/api/types';
 import { Badge } from '@/components/badge';
 import { Chip } from '@/components/choice';
 import { Fab, FAB_CLEARANCE } from '@/components/fab';
@@ -13,22 +13,17 @@ import { Panel } from '@/components/panel';
 import { UpcomingRow } from '@/components/upcoming-row';
 import { QueryState } from '@/components/query-state';
 import { ThemedText } from '@/components/themed-text';
+import { PendingSyncBanner } from '@/components/pending-sync-banner';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayLabel, useFormatCurrency } from '@/lib/format';
+import { useT, type Translator } from '@/lib/i18n';
 
 const PERIODS = [
-  { label: 'Today', days: 1, phrase: 'today' },
-  { label: '7 days', days: 7, phrase: 'last 7 days' },
-  { label: '30 days', days: 30, phrase: 'last 30 days' },
+  { key: 'today', days: 1 },
+  { key: 'week', days: 7 },
+  { key: 'month', days: 30 },
 ] as const;
-
-const METHOD: Record<PaymentMethod, string> = {
-  CASH: 'Cash',
-  CARD: 'Card',
-  MOBILE_MONEY: 'Mobile',
-  BANK_TRANSFER: 'Bank',
-};
 
 /** Icon + tint for where an expense came from. */
 const SOURCE: Record<ExpenseSource, { icon: IconName; tint: string }> = {
@@ -45,6 +40,7 @@ type Row =
 /** Everything the business pays out: summary, what's due, where it goes, and the full ledger. */
 export default function ExpensesScreen() {
   const theme = useTheme();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
   const [days, setDays] = useState<number>(30);
   const [categoryId, setCategoryId] = useState<string | undefined>();
@@ -54,7 +50,7 @@ export default function ExpensesScreen() {
   const query = useExpenses({ days, categoryId });
 
   const period = PERIODS.find((p) => p.days === days) ?? PERIODS[2];
-  const rows = useMemo(() => groupByDay(query.data?.pages.flatMap((p) => p.items) ?? []), [query.data]);
+  const rows = useMemo(() => groupByDay(query.data?.pages.flatMap((p) => p.items) ?? [], t), [query.data, t]);
   const categories = overview.data?.expensesByCategory ?? [];
   const top = categories.slice(0, 5);
   const spent = overview.data?.totalExpenses ?? 0;
@@ -67,6 +63,10 @@ export default function ExpensesScreen() {
 
   const header = (
     <View style={{ gap: Spacing.three, paddingBottom: Spacing.two }}>
+      <PendingSyncBanner
+        kinds={['expense', 'billPayment', 'salary', 'supplierPayment', 'repeatingBill']}
+        noun={[t('expenses.pendingNoun', { count: 1 }), t('expenses.pendingNoun', { count: 2 })]}
+      />
       {/* Period */}
       <View style={{ flexDirection: 'row', padding: 3, borderRadius: 999, backgroundColor: theme.backgroundSelected }}>
         {PERIODS.map((p) => {
@@ -86,7 +86,7 @@ export default function ExpensesScreen() {
                 boxShadow: selected ? '0 1px 2px rgba(15, 23, 42, 0.12)' : undefined,
               }}>
               <ThemedText type="smallBold" themeColor={selected ? 'text' : 'textSecondary'}>
-                {p.label}
+                {t(`dashboard.periods.${p.key}`)}
               </ThemedText>
             </Pressable>
           );
@@ -99,7 +99,7 @@ export default function ExpensesScreen() {
           <IconTile name="arrowUp" tint={TINT.rose} size={44} />
           <View style={{ flex: 1, gap: 2 }}>
             <ThemedText type="small" themeColor="textSecondary">
-              Money out · {period.phrase}
+              {t('expenses.moneyOut', { period: t(`dashboard.phrases.${period.key}`) })}
             </ThemedText>
             <ThemedText
               adjustsFontSizeToFit
@@ -111,9 +111,9 @@ export default function ExpensesScreen() {
         </View>
         {overview.data && (
           <View style={{ flexDirection: 'row', gap: Spacing.three }}>
-            <MiniStat label="Sales in" value={formatCurrency(overview.data.totalIncome)} />
+            <MiniStat label={t('expenses.salesIn')} value={formatCurrency(overview.data.totalIncome)} />
             <MiniStat
-              label="Left over"
+              label={t('expenses.leftOver')}
               value={formatCurrency(overview.data.netProfit)}
               color={overview.data.netProfit >= 0 ? theme.success : theme.danger}
             />
@@ -128,17 +128,17 @@ export default function ExpensesScreen() {
           tint={TINT.amber}
           title={
             upcoming.data.overdueCount > 0
-              ? `${upcoming.data.overdueCount} overdue · ${upcoming.data.items.length} to pay`
-              : `${upcoming.data.items.length} to pay soon`
+              ? t('expenses.overdueToPay', { overdue: upcoming.data.overdueCount, count: upcoming.data.items.length })
+              : t('expenses.toPaySoon', { count: upcoming.data.items.length })
           }
-          action="All bills"
+          action={t('expenses.allBills')}
           onAction={() => router.push('/more/bills')}>
           {upcoming.data.items.slice(0, 3).map((item) => (
             <UpcomingRow key={item.kind + item.id} item={item} />
           ))}
           {upcoming.data.items.length > 3 && (
             <ThemedText type="caption" themeColor="textSecondary">
-              +{upcoming.data.items.length - 3} more · {formatCurrency(upcoming.data.total)} in total
+              {t('expenses.moreInTotal', { count: upcoming.data.items.length - 3, amount: formatCurrency(upcoming.data.total) })}
             </ThemedText>
           )}
         </Panel>
@@ -146,13 +146,13 @@ export default function ExpensesScreen() {
 
       {/* Shortcuts */}
       <View style={{ flexDirection: 'row', gap: Spacing.three }}>
-        <Shortcut icon="repeat" tint={TINT.violet} title="Bills" subtitle="Rent, internet…" href="/more/bills" />
-        <Shortcut icon="team" tint={TINT.emerald} title="Salaries" subtitle="Pay your team" href="/more/staff" />
+        <Shortcut icon="repeat" tint={TINT.violet} title={t('expenses.bills')} subtitle={t('expenses.billsHint')} href="/more/bills" />
+        <Shortcut icon="team" tint={TINT.emerald} title={t('expenses.salaries')} subtitle={t('expenses.salariesHint')} href="/more/staff" />
       </View>
 
       {/* Where it goes */}
       {top.length > 0 && spent > 0 && (
-        <Panel icon="grid" tint={TINT.indigo} title="Where it goes">
+        <Panel icon="grid" tint={TINT.indigo} title={t('expenses.whereItGoes')}>
           {top.map((c) => (
             <Pressable
               key={c.categoryId}
@@ -185,7 +185,7 @@ export default function ExpensesScreen() {
       {/* Filter */}
       {categories.length > 1 && (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two }}>
-          <Chip label="All" selected={!categoryId} onPress={() => setCategoryId(undefined)} />
+          <Chip label={t('common.all')} selected={!categoryId} onPress={() => setCategoryId(undefined)} />
           {categories.map((c) => (
             <Chip key={c.categoryId} label={c.name} selected={categoryId === c.categoryId} onPress={() => setCategoryId(c.categoryId)} />
           ))}
@@ -230,11 +230,11 @@ export default function ExpensesScreen() {
             isLoading={query.isLoading}
             error={query.error}
             onRetry={query.refetch}
-            emptyTitle="Nothing spent yet"
+            emptyTitle={t('expenses.nothingSpent')}
             emptyMessage={
               categoryId
-                ? 'No spending in this category for the period.'
-                : 'Tap + to record rent, bills, transport or any other spending. Salaries and supplier payments show up here too.'
+                ? t('expenses.noneInCategory')
+                : t('expenses.emptyHint')
             }
           />
         }
@@ -246,12 +246,12 @@ export default function ExpensesScreen() {
           ) : undefined
         }
       />
-      <Fab label="Add expense" onPress={() => router.push('/expense-form')} />
+      <Fab label={t('expenses.addExpense')} onPress={() => router.push('/expense-form')} />
     </View>
   );
 }
 
-function groupByDay(expenses: Expense[]): Row[] {
+function groupByDay(expenses: Expense[], t: Translator): Row[] {
   const rows: Row[] = [];
   let current: Extract<Row, { type: 'day' }> | null = null;
   let currentKey = '';
@@ -259,7 +259,7 @@ function groupByDay(expenses: Expense[]): Row[] {
     const key = new Date(expense.date).toDateString();
     if (key !== currentKey) {
       currentKey = key;
-      current = { type: 'day', key: `day-${key}`, label: formatDayLabel(expense.date), total: 0 };
+      current = { type: 'day', key: `day-${key}`, label: formatDayLabel(expense.date, t), total: 0 };
       rows.push(current);
     }
     if (expense.status !== 'CANCELLED') current!.total += expense.amount;
@@ -326,6 +326,7 @@ function Shortcut({
 
 function ExpenseRow({ expense, amount }: { expense: Expense; amount: string }) {
   const theme = useTheme();
+  const t = useT();
   const src = SOURCE[expense.source] ?? SOURCE.MANUAL;
   return (
     <Pressable
@@ -351,15 +352,15 @@ function ExpenseRow({ expense, amount }: { expense: Expense; amount: string }) {
           {expense.title}
         </ThemedText>
         <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1}>
-          {expense.category.name} · {METHOD[expense.paymentMethod]}
+          {expense.category.name} · {t(`common.paymentMethods.${expense.paymentMethod}`)}
         </ThemedText>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 4 }}>
         <ThemedText type="smallBold" style={{ fontVariant: ['tabular-nums'] }}>
           {amount}
         </ThemedText>
-        {expense.status === 'PENDING' && <Badge label="Unpaid" tone="warning" />}
-        {expense.status === 'CANCELLED' && <Badge label="Cancelled" tone="textSecondary" />}
+        {expense.status === 'PENDING' && <Badge label={t('expenses.unpaid')} tone="warning" />}
+        {expense.status === 'CANCELLED' && <Badge label={t('expenses.cancelled')} tone="textSecondary" />}
       </View>
     </Pressable>
   );

@@ -1,6 +1,10 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
-import { paginationQuery, paymentMethodSchema } from '../../common/utils.js';
+import {
+  paginationQuery,
+  paymentMethodSchema,
+  recordedAtSchema,
+} from '../../common/utils.js';
 
 const optionalText = (max: number) =>
   z
@@ -39,6 +43,8 @@ export class CreateSupplierPaymentDto extends createZodDto(
     amount: z.number().positive().finite(),
     paymentMethod: paymentMethodSchema.default('CASH'),
     note: optionalText(200),
+    // When it was paid (payments recorded offline and synced later).
+    recordedAt: recordedAtSchema,
   }),
 ) {}
 
@@ -75,5 +81,7 @@ export class CreatePurchaseDto extends createZodDto(
     // Keep the product's cost price in step with what was just paid.
     updateCostPrice: z.boolean().default(true),
     note: optionalText(500),
+    // When the stock arrived (deliveries recorded offline and synced later).
+    recordedAt: recordedAtSchema,
   }),
 ) {}

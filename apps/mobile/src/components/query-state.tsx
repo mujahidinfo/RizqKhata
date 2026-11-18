@@ -4,6 +4,7 @@ import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 /** Full-area loading / error / empty placeholder for query-driven screens. */
 export function QueryState({
@@ -20,6 +21,7 @@ export function QueryState({
   emptyMessage?: string;
 }) {
   const theme = useTheme();
+  const t = useT();
 
   if (isLoading) {
     return (
@@ -32,18 +34,18 @@ export function QueryState({
   if (error) {
     return (
       <View style={styles.center}>
-        <ThemedText type="smallBold">Couldn’t load this</ThemedText>
+        <ThemedText type="smallBold">{t('common.couldNotLoad')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary" style={styles.message}>
           {error.message}
         </ThemedText>
-        {onRetry && <Button title="Try again" variant="secondary" onPress={onRetry} />}
+        {onRetry && <Button title={t('common.tryAgain')} variant="secondary" onPress={onRetry} />}
       </View>
     );
   }
 
   return (
     <View style={styles.center}>
-      <ThemedText type="smallBold">{emptyTitle ?? 'Nothing here yet'}</ThemedText>
+      <ThemedText type="smallBold">{emptyTitle ?? t('common.nothingHere')}</ThemedText>
       {emptyMessage && (
         <ThemedText type="small" themeColor="textSecondary" style={styles.message}>
           {emptyMessage}

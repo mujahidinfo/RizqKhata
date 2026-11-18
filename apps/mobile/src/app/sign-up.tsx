@@ -9,11 +9,13 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ApiError } from '@/lib/api-client';
 import { useSession } from '@/lib/session';
+import { useT } from '@/lib/i18n';
 
 const MIN_PASSWORD = 8;
 
 export default function SignUpScreen() {
   const { signUp } = useSession();
+  const t = useT();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,10 +36,10 @@ export default function SignUpScreen() {
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 429
-          ? 'Too many attempts. Wait a minute and try again.'
+          ? t('auth.tooManyAttempts')
           : e instanceof Error
             ? e.message
-            : 'Something went wrong.',
+            : t('common.somethingWrong'),
       );
       setSubmitting(false);
     }
@@ -45,17 +47,17 @@ export default function SignUpScreen() {
 
   return (
     <AuthScreen
-      title="Create your account"
-      subtitle="Free to start. Set up your shop in a minute."
+      title={t('auth.createTitle')}
+      subtitle={t('auth.createSubtitle')}
       footer={
         <View style={styles.switch}>
-          <ThemedText themeColor="textSecondary">Already have an account?</ThemedText>
-          <HeaderButton title="Sign in" onPress={() => router.replace('/sign-in')} />
+          <ThemedText themeColor="textSecondary">{t('auth.haveAccount')}</ThemedText>
+          <HeaderButton title={t('auth.signIn')} onPress={() => router.replace('/sign-in')} />
         </View>
       }>
       <GoogleButton onError={setError} />
       <TextField
-        label="Your name"
+        label={t('auth.yourName')}
         value={name}
         onChangeText={setName}
         autoCapitalize="words"
@@ -64,7 +66,7 @@ export default function SignUpScreen() {
         returnKeyType="next"
       />
       <TextField
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -74,7 +76,7 @@ export default function SignUpScreen() {
         returnKeyType="next"
       />
       <TextField
-        label="Password"
+        label={t('auth.password')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -93,7 +95,7 @@ export default function SignUpScreen() {
           {error}
         </ThemedText>
       )}
-      <Button title="Create account" onPress={onSubmit} loading={submitting} disabled={!canSubmit} />
+      <Button title={t('auth.createButton')} onPress={onSubmit} loading={submitting} disabled={!canSubmit} />
     </AuthScreen>
   );
 }

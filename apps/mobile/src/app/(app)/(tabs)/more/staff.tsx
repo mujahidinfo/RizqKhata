@@ -14,12 +14,13 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDayLabel, useFormatCurrency } from '@/lib/format';
-import { ROLE_LABEL } from '@/lib/roles';
 import { useCurrentUser } from '@/lib/session';
+import { useT } from '@/lib/i18n';
 
 /** Your team: who can sign in, what they earn, and who has been paid this month. */
 export default function StaffScreen() {
   const theme = useTheme();
+  const t = useT();
   const me = useCurrentUser();
   const formatCurrency = useFormatCurrency();
   const members = useMembers();
@@ -51,18 +52,18 @@ export default function StaffScreen() {
           />
         }>
         {totals && items.length > 0 && (
-          <Panel icon="wallet" tint={TINT.emerald} title={`${payroll.data!.label} salaries`}>
+          <Panel icon="wallet" tint={TINT.emerald} title={t('staff.monthSalaries', { month: payroll.data!.label })}>
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: Spacing.three }}>
               <View>
                 <ThemedText type="caption" themeColor="textSecondary">
-                  Still to pay
+                  {t('staff.stillToPay')}
                 </ThemedText>
                 <ThemedText style={{ fontSize: 30, lineHeight: 36, fontWeight: 700, fontVariant: ['tabular-nums'] }}>
                   {formatCurrency(totals.outstanding)}
                 </ThemedText>
               </View>
               <ThemedText type="small" themeColor="textSecondary">
-                {paidCount} of {items.length} paid
+                {t('staff.paidOf', { paid: paidCount, count: items.length })}
               </ThemedText>
             </View>
             <View style={{ height: 8, borderRadius: 4, backgroundColor: theme.backgroundSelected, overflow: 'hidden' }}>
@@ -78,12 +79,12 @@ export default function StaffScreen() {
           </Panel>
         )}
 
-        <Label>Team</Label>
+        <Label>{t('staff.team')}</Label>
         {members.data.map((m) => (
           <MemberCard key={m.id} member={m} isMe={m.user.id === me.id} pay={byMember.get(m.id)} />
         ))}
 
-        {payrollOnly.length > 0 && <Label>On payroll, no app login</Label>}
+        {payrollOnly.length > 0 && <Label>{t('staff.payrollOnly')}</Label>}
         {payrollOnly.map((p) => (
           <PayrollOnlyCard key={p.employeeId} item={p} />
         ))}
@@ -106,20 +107,19 @@ export default function StaffScreen() {
           <Icon name="personAdd" size={20} color={theme.primary} />
           <View style={{ flex: 1 }}>
             <ThemedText type="smallBold" themeColor="primary">
-              Add someone to payroll
+              {t('staff.addToPayroll')}
             </ThemedText>
             <ThemedText type="caption" themeColor="textSecondary">
-              For helpers and others who don’t use the app but get a salary.
+              {t('staff.addToPayrollHint')}
             </ThemedText>
           </View>
         </Pressable>
 
         <ThemedText type="caption" themeColor="textSecondary" style={{ paddingHorizontal: Spacing.one }}>
-          Cashiers can sell and see orders. Inventory managers also add products, receive stock and manage
-          suppliers. Managers can do everything except manage owners.
+          {t('staff.rolesHint')}
         </ThemedText>
       </ScrollView>
-      <Fab label="Add staff member" icon="personAdd" onPress={() => router.push('/member-form')} />
+      <Fab label={t('staff.addStaff')} icon="personAdd" onPress={() => router.push('/member-form')} />
     </View>
   );
 }
@@ -137,13 +137,14 @@ function Label({ children }: { children: string }) {
 
 function PayStatus({ item }: { item: PayrollItem }) {
   const theme = useTheme();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
   if (item.state === 'PAID') {
     return (
       <View style={{ alignItems: 'flex-end', gap: 2 }}>
-        <Badge label="Paid" tone="success" />
+        <Badge label={t('staff.paid')} tone="success" />
         <ThemedText type="caption" themeColor="textSecondary">
-          {item.paidOn ? formatDayLabel(item.paidOn) : ''}
+          {item.paidOn ? formatDayLabel(item.paidOn, t) : ''}
         </ThemedText>
       </View>
     );
@@ -151,7 +152,7 @@ function PayStatus({ item }: { item: PayrollItem }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Pay ${item.name} ${formatCurrency(item.amount)}`}
+      accessibilityLabel={t('staff.payA11y', { name: item.name, amount: formatCurrency(item.amount) })}
       hitSlop={6}
       onPress={() => router.push({ pathname: '/pay-bill', params: { kind: 'SALARY', id: item.employeeId } })}
       style={({ pressed }) => ({
@@ -162,7 +163,7 @@ function PayStatus({ item }: { item: PayrollItem }) {
         opacity: pressed ? 0.8 : 1,
       })}>
       <ThemedText type="smallBold" style={{ color: item.state === 'DUE' ? theme.onPrimary : theme.primary }}>
-        Pay
+        {t('staff.pay')}
       </ThemedText>
     </Pressable>
   );
@@ -192,23 +193,24 @@ function Card({ onPress, children }: { onPress: () => void; children: React.Reac
 
 function MemberCard({ member, isMe, pay }: { member: Member; isMe: boolean; pay?: PayrollItem }) {
   const formatCurrency = useFormatCurrency();
+  const t = useT();
   return (
     <Card onPress={() => router.push({ pathname: '/member-form', params: { id: member.id } })}>
       <Avatar name={member.user.name} avatarUrl={member.user.avatarUrl} size={46} />
       <View style={{ flex: 1, gap: 3 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
           <ThemedText type="smallBold" style={{ fontSize: 16, flexShrink: 1 }} numberOfLines={1}>
-            {isMe ? `${member.user.name} (you)` : member.user.name}
+            {isMe ? t('staff.you', { name: member.user.name }) : member.user.name}
           </ThemedText>
           {member.isActive ? (
-            <Badge label={ROLE_LABEL[member.role]} tone={member.role === 'OWNER' ? 'primary' : 'textSecondary'} />
+            <Badge label={t(`roles.${member.role}`)} tone={member.role === 'OWNER' ? 'primary' : 'textSecondary'} />
           ) : (
-            <Badge label="No access" tone="danger" />
+            <Badge label={t('staff.noAccess')} tone="danger" />
           )}
         </View>
         <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1}>
-          {member.shop?.name ?? 'All branches'}
-          {pay ? ` · ${formatCurrency(pay.amount)} / month` : ''}
+          {member.shop?.name ?? t('staff.allBranches')}
+          {pay ? t('staff.perMonth', { amount: formatCurrency(pay.amount) }) : ''}
         </ThemedText>
       </View>
       {pay && <PayStatus item={pay} />}

@@ -4,25 +4,23 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useCreateOrder, useCustomerLookup, useFindOrCreateCustomer, useShop } from '@/api/queries';
+import { useCreateOrder, useCustomerLookup, useShop } from '@/api/queries';
 import type { Order, PaymentMethod } from '@/api/types';
 import { Button } from '@/components/button';
 import { Card, DetailRow } from '@/components/card';
 import { Chip, Segmented } from '@/components/choice';
+import { Icon } from '@/components/icon';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useCart } from '@/lib/cart';
 import { formatDateTime, useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-const METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'CASH', label: 'Cash' },
-  { value: 'MOBILE_MONEY', label: 'bKash / Mobile' },
-  { value: 'CARD', label: 'Card' },
-];
+const METHODS: PaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD'];
 
 /** Round-up amounts a customer is likely to hand over. */
 function quickCash(total: number) {
@@ -37,12 +35,12 @@ function quickCash(total: number) {
 
 export default function CheckoutScreen() {
   const theme = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const cart = useCart();
   const formatCurrency = useFormatCurrency();
   const { data: shop } = useShop();
   const createOrder = useCreateOrder();
-  const findOrCreateCustomer = useFindOrCreateCustomer();
 
   const [method, setMethod] = useState<PaymentMethod>('CASH');
   const [cash, setCash] = useState('');
@@ -53,7 +51,8 @@ export default function CheckoutScreen() {
   const [phone, setPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [completed, setCompleted] = useState<Order | null>(null);
+  // `queued`: saved on the phone (offline), syncs later.
+  const [completed, setCompleted] = useState<{ order: Order; queued: boolean } | null>(null);
 
   const lookup = useCustomerLookup(showCustomer ? phone : '');
   const knownCustomer = lookup.data ?? null;
@@ -79,33 +78,70 @@ export default function CheckoutScreen() {
     if (createOrder.isPending || cashShort || cart.lines.length === 0) return;
     setError(null);
     try {
-      let customerId = knownCustomer?.id;
-      if (!customerId && showCustomer && phone.trim() && customerName.trim()) {
-        customerId = (
-          await findOrCreateCustomer.mutateAsync({ phone: phone.trim(), name: customerName.trim() })
-        ).id;
-      }
-      const order = await createOrder.mutateAsync({
-        items: cart.lines.map((l) => ({
-          productId: l.productId,
-          variantId: l.variantId,
-          name: l.variantName ? `${l.name} (${l.variantName})` : l.name,
-          sku: l.sku ?? undefined,
-          price: l.price,
-          quantity: l.quantity,
-        })),
+      // A new customer is found-or-created together with the sale, so this
+      // works offline too.
+      const newCustomer =
+        !knownCustomer && showCustomer && phone.trim() && customerName.trim()
+          ? { phone: phone.trim(), name: customerName.trim() }
+          : undefined;
+      const items = cart.lines.map((l) => ({
+        productId: l.productId,
+        variantId: l.variantId,
+        name: l.variantName ? `${l.name} (${l.variantName})` : l.name,
+        sku: l.sku ?? undefined,
+        price: l.price,
+        quantity: l.quantity,
+      }));
+      const amountTendered = method === 'CASH' ? (cashValue ?? total) : undefined;
+      const result = await createOrder.mutateAsync({
+        items,
         paymentMethod: method,
-        amountTendered: method === 'CASH' ? (cashValue ?? total) : undefined,
+        amountTendered,
         ...(discountAmt > 0 && { discountType, discountValue }),
         taxRate,
-        customerId,
+        customerId: knownCustomer?.id,
+        customer: newCustomer,
         status: 'FULFILLED',
+        total,
       });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      setCompleted(order);
+      if (result.status === 'synced') {
+        setCompleted({ order: result.data, queued: false });
+      } else {
+        // Receipt from what was rung up; the order number comes after it syncs.
+        setCompleted({
+          queued: true,
+          order: {
+            id: result.item.id,
+            orderNumber: t('checkout.savedOffline'),
+            status: 'FULFILLED',
+            type: 'WALK_IN',
+            subtotal,
+            discountAmt,
+            taxRate,
+            taxAmt,
+            total,
+            paymentMethod: method,
+            amountTendered: amountTendered ?? null,
+            note: null,
+            createdAt: result.item.createdAt,
+            customer: null,
+            cashier: null,
+            items: items.map((i) => ({
+              id: i.variantId,
+              name: i.name,
+              sku: i.sku ?? null,
+              price: i.price,
+              quantity: i.quantity,
+              total: round2(i.price * i.quantity),
+            })),
+            refunds: [],
+          },
+        });
+      }
     } catch (e) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError(e instanceof Error ? e.message : 'Could not complete the sale.');
+      setError(e instanceof Error ? e.message : t('checkout.couldNotComplete'));
     }
   };
 
@@ -115,23 +151,24 @@ export default function CheckoutScreen() {
   };
 
   if (completed) {
-    const tendered = completed.amountTendered;
-    const changeGiven = tendered !== null ? round2(tendered - completed.total) : null;
+    const { order: done, queued } = completed;
+    const tendered = done.amountTendered;
+    const changeGiven = tendered !== null ? round2(tendered - done.total) : null;
     const shareReceipt = () =>
       Share.share({
         message: [
           shop?.businessName ?? shop?.name,
-          `${completed.orderNumber} · ${formatDateTime(completed.createdAt)}`,
+          `${done.orderNumber} · ${formatDateTime(done.createdAt, t)}`,
           '',
-          ...completed.items.map((i) => `${i.quantity} × ${i.name}  ${formatCurrency(i.total)}`),
+          ...done.items.map((i) => `${i.quantity} × ${i.name}  ${formatCurrency(i.total)}`),
           '',
-          completed.discountAmt > 0 ? `Discount  −${formatCurrency(completed.discountAmt)}` : null,
-          completed.taxAmt > 0 ? `Tax  ${formatCurrency(completed.taxAmt)}` : null,
-          `Total  ${formatCurrency(completed.total)}`,
-          tendered !== null ? `Paid  ${formatCurrency(tendered)}` : null,
-          changeGiven ? `Change  ${formatCurrency(changeGiven)}` : null,
+          done.discountAmt > 0 ? `${t('checkout.discount')}  −${formatCurrency(done.discountAmt)}` : null,
+          done.taxAmt > 0 ? `${t('checkout.tax')}  ${formatCurrency(done.taxAmt)}` : null,
+          `${t('common.total')}  ${formatCurrency(done.total)}`,
+          tendered !== null ? `${t('checkout.receiptPaid')}  ${formatCurrency(tendered)}` : null,
+          changeGiven ? `${t('checkout.change')}  ${formatCurrency(changeGiven)}` : null,
           '',
-          'Thank you!',
+          t('checkout.receiptThanks'),
         ]
           .filter((l) => l !== null)
           .join('\n'),
@@ -147,18 +184,27 @@ export default function CheckoutScreen() {
             paddingBottom: Spacing.four + Math.max(insets.bottom, Platform.OS === 'android' ? 16 : 0),
           },
         ]}>
-        <Stack.Screen options={{ title: 'Paid', headerBackVisible: false, gestureEnabled: false }} />
+        <Stack.Screen options={{ title: t('screens.paid'), headerBackVisible: false, gestureEnabled: false }} />
         <View style={[styles.check, { backgroundColor: theme.success }]}>
           <ThemedText style={styles.checkMark}>✓</ThemedText>
         </View>
-        <ThemedText type="small" themeColor="textSecondary">
-          {completed.orderNumber}
-        </ThemedText>
-        <ThemedText type="title">{formatCurrency(completed.total)}</ThemedText>
+        {queued ? (
+          <View style={[styles.offlinePill, { backgroundColor: `${theme.warning}1F` }]}>
+            <Icon name="cloudOff" size={14} color={theme.warning} />
+            <ThemedText type="smallBold" style={{ color: theme.warning }}>
+              {t('checkout.savedOfflineSync')}
+            </ThemedText>
+          </View>
+        ) : (
+          <ThemedText type="small" themeColor="textSecondary">
+            {done.orderNumber}
+          </ThemedText>
+        )}
+        <ThemedText type="title">{formatCurrency(done.total)}</ThemedText>
         {changeGiven !== null && changeGiven > 0 && (
           <View style={[styles.changeBox, { backgroundColor: `${theme.success}1A` }]}>
             <ThemedText type="small" themeColor="textSecondary">
-              Give change
+              {t('checkout.giveChange')}
             </ThemedText>
             <ThemedText type="subtitle" themeColor="success">
               {formatCurrency(changeGiven)}
@@ -166,8 +212,8 @@ export default function CheckoutScreen() {
           </View>
         )}
         <View style={styles.doneActions}>
-          <Button title="New sale" onPress={newSale} />
-          <Button title="Share receipt" variant="secondary" onPress={shareReceipt} />
+          <Button title={t('checkout.newSale')} onPress={newSale} />
+          <Button title={t('checkout.shareReceipt')} variant="secondary" onPress={shareReceipt} />
         </View>
       </View>
     );
@@ -187,12 +233,16 @@ export default function CheckoutScreen() {
           </ThemedText>
         </View>
 
-        <Segmented options={METHODS} value={method} onChange={setMethod} />
+        <Segmented
+          options={METHODS.map((value) => ({ value, label: t(`common.paymentMethods.${value}`) }))}
+          value={method}
+          onChange={setMethod}
+        />
 
         {method === 'CASH' && (
           <Card>
             <TextField
-              label="Cash received"
+              label={t('checkout.cashReceived')}
               value={cash}
               onChangeText={setCash}
               placeholder={String(total)}
@@ -202,7 +252,7 @@ export default function CheckoutScreen() {
               {quickCash(total).map((amount) => (
                 <Chip
                   key={amount}
-                  label={amount === total ? 'Exact' : formatCurrency(amount)}
+                  label={amount === total ? t('checkout.exact') : formatCurrency(amount)}
                   selected={cashValue === amount}
                   onPress={() => setCash(String(amount))}
                 />
@@ -210,7 +260,7 @@ export default function CheckoutScreen() {
             </View>
             {change !== null && (
               <DetailRow
-                label={cashShort ? 'Still due' : 'Change'}
+                label={cashShort ? t('checkout.stillDue') : t('checkout.change')}
                 value={formatCurrency(Math.abs(change))}
                 emphasis
               />
@@ -219,26 +269,26 @@ export default function CheckoutScreen() {
         )}
 
         <Card>
-          <DetailRow label="Subtotal" value={formatCurrency(subtotal)} />
-          {discountAmt > 0 && <DetailRow label="Discount" value={`−${formatCurrency(discountAmt)}`} />}
+          <DetailRow label={t('checkout.subtotal')} value={formatCurrency(subtotal)} />
+          {discountAmt > 0 && <DetailRow label={t('checkout.discount')} value={`−${formatCurrency(discountAmt)}`} />}
           {taxAmt > 0 && (
-            <DetailRow label={`${shop?.taxName ?? 'Tax'} (${taxRate}%)`} value={formatCurrency(taxAmt)} />
+            <DetailRow label={`${shop?.taxName ?? t('checkout.tax')} (${taxRate}%)`} value={formatCurrency(taxAmt)} />
           )}
-          <DetailRow label="Total" value={formatCurrency(total)} emphasis />
+          <DetailRow label={t('common.total')} value={formatCurrency(total)} emphasis />
         </Card>
 
         {showDiscount ? (
-          <Card title="Discount">
+          <Card title={t('checkout.discount')}>
             <Segmented
               options={[
-                { value: 'fixed', label: 'Amount' },
-                { value: 'percentage', label: 'Percent' },
+                { value: 'fixed', label: t('checkout.amount') },
+                { value: 'percentage', label: t('checkout.percent') },
               ]}
               value={discountType}
               onChange={setDiscountType}
             />
             <TextField
-              label={discountType === 'percentage' ? 'Discount %' : 'Discount amount'}
+              label={discountType === 'percentage' ? t('checkout.discountPercent') : t('checkout.discountAmount')}
               value={discountText}
               onChangeText={setDiscountText}
               placeholder="0"
@@ -247,13 +297,13 @@ export default function CheckoutScreen() {
             />
           </Card>
         ) : (
-          <Button title="Add discount" variant="secondary" onPress={() => setShowDiscount(true)} />
+          <Button title={t('checkout.addDiscount')} variant="secondary" onPress={() => setShowDiscount(true)} />
         )}
 
         {showCustomer ? (
-          <Card title="Customer (optional)">
+          <Card title={t('checkout.customerOptional')}>
             <TextField
-              label="Phone"
+              label={t('checkout.phone')}
               value={phone}
               onChangeText={setPhone}
               placeholder="01XXXXXXXXX"
@@ -268,7 +318,7 @@ export default function CheckoutScreen() {
               phone.trim().length >= 6 &&
               !lookup.isFetching && (
                 <TextField
-                  label="New customer name"
+                  label={t('checkout.newCustomerName')}
                   value={customerName}
                   onChangeText={setCustomerName}
                   autoCapitalize="words"
@@ -277,7 +327,7 @@ export default function CheckoutScreen() {
             )}
           </Card>
         ) : (
-          <Button title="Add customer" variant="secondary" onPress={() => setShowCustomer(true)} />
+          <Button title={t('checkout.addCustomer')} variant="secondary" onPress={() => setShowCustomer(true)} />
         )}
 
         {error && (
@@ -297,9 +347,9 @@ export default function CheckoutScreen() {
           },
         ]}>
         <Button
-          title={`Charge ${formatCurrency(total)}`}
+          title={t('checkout.chargeAmount', { amount: formatCurrency(total) })}
           onPress={charge}
-          loading={createOrder.isPending || findOrCreateCustomer.isPending}
+          loading={createOrder.isPending}
           disabled={cashShort || cart.lines.length === 0}
         />
       </View>
@@ -359,6 +409,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.five,
     marginTop: Spacing.two,
+  },
+  offlinePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 6,
+    borderRadius: Radius.lg,
   },
   doneActions: {
     alignSelf: 'stretch',

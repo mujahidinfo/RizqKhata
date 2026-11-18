@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ShoppingBag } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -32,15 +32,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-brand-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-primary-foreground">
-            <Link href="/">
-              <ShoppingBag className="w-7 h-7" />
-            </Link>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight">GenPOS</h1>
+          <Link href="/" aria-label="Rizq Khata home">
+            <Image src="/logo-wordmark.png" alt="Rizq Khata" width={240} height={52} priority className="h-12 w-auto dark:hidden" />
+            <Image src="/logo-wordmark-dark.png" alt="Rizq Khata" width={240} height={52} priority className="hidden h-12 w-auto dark:block" />
+          </Link>
           <p className="text-muted-foreground text-sm">Point of Sale for modern shops</p>
         </div>
         <Card>
@@ -65,7 +63,7 @@ export default function LoginPage() {
           </CardContent>
         </Card>
         <p className="text-center text-sm text-muted-foreground">
-          New to GenPOS?{" "}
+          New to Rizq Khata?{" "}
           <Link href="/signup" className="font-medium text-primary hover:underline">
             Create a free account
           </Link>

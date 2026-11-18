@@ -175,8 +175,8 @@ export function EmployeesView() {
                 <p className="text-2xl font-bold text-slate-900 mt-1">{activeEmployees.length}</p>
                 <p className="text-xs text-slate-400 mt-0.5">{t("finance.inactiveCount", { count: inactiveEmployees.length })}</p>
               </div>
-              <div className="p-2.5 rounded-xl bg-indigo-50">
-                <Users className="h-5 w-5 text-indigo-600" />
+              <div className="p-2.5 rounded-xl bg-brand-50">
+                <Users className="h-5 w-5 text-brand-600" />
               </div>
             </div>
           </CardContent>
@@ -223,7 +223,7 @@ export function EmployeesView() {
       {inactiveEmployees.length > 0 && (
         <button
           onClick={() => setShowInactive((v) => !v)}
-          className="text-sm text-indigo-600 hover:underline"
+          className="text-sm text-brand-600 hover:underline"
         >
           {showInactive ? t("finance.hideInactive") : t("finance.showInactive", { count: inactiveEmployees.length })}
         </button>
@@ -254,7 +254,7 @@ export function EmployeesView() {
               >
                 <CardContent className="pt-5 pb-4">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm shrink-0">
                       {emp.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
                     </div>
                     <div className="flex gap-1">

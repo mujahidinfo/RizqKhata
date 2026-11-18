@@ -221,7 +221,7 @@ function ProductDetailPanel({ productId, onClose, onEdit }: {
               <select
                 value={activeVariantId}
                 onChange={(e) => setAdjVariantId(e.target.value)}
-                className="w-full h-9 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full h-9 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 {product.variants.map((v) => (
                   <option key={v.id} value={v.id}>{t("inventory.variantStock", { name: v.name, stock: v.stock })}</option>
@@ -266,14 +266,14 @@ function ProductDetailPanel({ productId, onClose, onEdit }: {
                 placeholder={t("inventory.qty")}
                 value={adjQty}
                 onChange={(e) => setAdjQty(e.target.value)}
-                className="w-24 h-10 px-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-24 h-10 px-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               <input
                 type="text"
                 placeholder={t("inventory.noteOptional")}
                 value={adjNote}
                 onChange={(e) => setAdjNote(e.target.value)}
-                className="flex-1 h-10 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 h-10 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               <button
                 onClick={handleAdjust}
@@ -388,7 +388,7 @@ function Field({ label, name, value, onChange, error, type = "text", placeholder
         onChange={onChange}
         aria-invalid={!!error}
         className={cn(
-          "w-full h-11 px-3 bg-white border rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors",
+          "w-full h-11 px-3 bg-white border rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors",
           error ? "border-red-300 ring-1 ring-red-200" : "border-slate-200"
         )}
       />
@@ -535,7 +535,7 @@ function ProductFormPanel({ productId, categories, onClose }: {
             placeholder={t("inventory.descriptionPlaceholder")}
             value={form.description}
             onChange={set("description")}
-            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
           />
         </div>
 
@@ -586,7 +586,7 @@ function ProductFormPanel({ productId, categories, onClose }: {
           <select
             value={form.categoryId}
             onChange={set("categoryId")}
-            className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
           >
             <option value="">{t("inventory.noCategory")}</option>
             {categories.map((c) => (
@@ -601,9 +601,9 @@ function ProductFormPanel({ productId, categories, onClose }: {
         />
 
         {!isEdit && (
-          <div className="flex gap-2.5 px-4 py-3 bg-indigo-50 rounded-xl border border-indigo-100">
-            <Boxes className="h-4 w-4 text-indigo-500 shrink-0 mt-0.5" />
-            <p className="text-xs text-indigo-700 font-medium">
+          <div className="flex gap-2.5 px-4 py-3 bg-brand-50 rounded-xl border border-brand-100">
+            <Boxes className="h-4 w-4 text-brand-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-brand-700 font-medium">
               {t("inventory.defaultVariantNote")}
             </p>
           </div>
@@ -621,7 +621,7 @@ function ProductFormPanel({ productId, categories, onClose }: {
         <button
           onClick={handleSubmit}
           disabled={isPending}
-          className="flex-[2] h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+          className="flex-[2] h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
         >
           {isPending ? (
             <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -644,7 +644,7 @@ function CategoryManager({ categories, onRefresh }: {
   const utils = trpc.useUtils();
   const { t } = useTranslation();
   const [newName, setNewName]     = useState("");
-  const [newColor, setNewColor]   = useState("#6366f1");
+  const [newColor, setNewColor]   = useState("#17694C");
   const [editId, setEditId]       = useState<string | null>(null);
   const [editName, setEditName]   = useState("");
 
@@ -683,13 +683,13 @@ function CategoryManager({ categories, onRefresh }: {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && newName.trim() && createCat.mutate({ name: newName.trim(), color: newColor })}
-              className="flex-1 h-10 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="flex-1 h-10 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
           <button
             onClick={() => newName.trim() && createCat.mutate({ name: newName.trim(), color: newColor })}
             disabled={!newName.trim() || createCat.isPending}
-            className="h-10 px-4 bg-indigo-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-indigo-700 disabled:opacity-40 transition-all"
+            className="h-10 px-4 bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 hover:bg-brand-700 disabled:opacity-40 transition-all"
           >
             {createCat.isPending ? <span className="h-3.5 w-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" /> : <><Plus className="h-3.5 w-3.5" /> {t("common.add")}</>}
           </button>
@@ -720,7 +720,7 @@ function CategoryManager({ categories, onRefresh }: {
                       if (e.key === "Enter" && editName.trim()) updateCat.mutate({ id: cat.id, name: editName.trim() });
                       if (e.key === "Escape") setEditId(null);
                     }}
-                    className="flex-1 h-8 px-2 border border-indigo-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 h-8 px-2 border border-brand-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                   />
                 ) : (
                   <span className="flex-1 text-sm font-semibold text-slate-800">{cat.name}</span>
@@ -730,7 +730,7 @@ function CategoryManager({ categories, onRefresh }: {
                   <div className="flex gap-1">
                     <button
                       onClick={() => editName.trim() && updateCat.mutate({ id: cat.id, name: editName.trim() })}
-                      className="h-7 px-2.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold"
+                      className="h-7 px-2.5 bg-brand-600 text-white rounded-lg text-xs font-semibold"
                     >{t("common.save")}</button>
                     <button onClick={() => setEditId(null)} className="h-7 px-2.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold">{t("common.cancel")}</button>
                   </div>
@@ -811,7 +811,7 @@ export function InventoryView() {
         {tab === "products" && (
           <button
             onClick={() => setPanel({ mode: "add" })}
-            className="flex items-center gap-2 h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-sm shadow-indigo-200 transition-all active:scale-[0.97] shrink-0"
+            className="flex items-center gap-2 h-10 px-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold shadow-sm shadow-brand-200 transition-all active:scale-[0.97] shrink-0"
           >
             <Plus className="h-4 w-4" />
             {t("inventory.addProduct")}
@@ -856,7 +856,7 @@ export function InventoryView() {
                 placeholder={t("inventory.searchPlaceholder")}
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm"
               />
               {search && (
                 <button onClick={() => handleSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-colors">
@@ -870,7 +870,7 @@ export function InventoryView() {
               <select
                 value={catFilter}
                 onChange={(e) => handleCat(e.target.value)}
-                className="h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm pr-8"
+                className="h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm pr-8"
               >
                 <option value="">{t("inventory.allCategories")}</option>
                 {categories.map((c) => (
@@ -920,7 +920,7 @@ export function InventoryView() {
               )}
             </p>
             {isFetching && !isLoading && (
-              <span className="h-4 w-4 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+              <span className="h-4 w-4 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin" />
             )}
           </div>
 
@@ -951,7 +951,7 @@ export function InventoryView() {
                 </div>
                 <p className="text-sm font-semibold text-slate-400">{t("inventory.noProducts")}</p>
                 {(search || catFilter || lowStock) && (
-                  <button onClick={() => { handleSearch(""); handleCat(""); setLowStock(false); }} className="text-xs text-indigo-600 mt-2.5 hover:underline font-semibold">
+                  <button onClick={() => { handleSearch(""); handleCat(""); setLowStock(false); }} className="text-xs text-brand-600 mt-2.5 hover:underline font-semibold">
                     {t("inventory.clearFilters")}
                   </button>
                 )}
@@ -973,7 +973,7 @@ export function InventoryView() {
                       className={cn(
                         "text-left p-4 rounded-2xl border bg-white transition-all duration-150 active:scale-[0.97] flex flex-col gap-2",
                         isSelected
-                          ? "border-indigo-300 shadow-md shadow-indigo-50 ring-2 ring-inset ring-indigo-200"
+                          ? "border-brand-300 shadow-md shadow-brand-50 ring-2 ring-inset ring-brand-200"
                           : "border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 cursor-pointer"
                       )}
                     >
@@ -1051,7 +1051,7 @@ export function InventoryView() {
                         <tr
                           key={product.id}
                           onClick={() => setPanel({ mode: "detail", productId: product.id })}
-                          className={cn("cursor-pointer transition-colors hover:bg-slate-50/70", isSelected && "bg-indigo-50/60")}
+                          className={cn("cursor-pointer transition-colors hover:bg-slate-50/70", isSelected && "bg-brand-50/60")}
                         >
                           <td className="px-5 py-3.5">
                             <p className="font-semibold text-slate-800">{product.name}</p>

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "GenPOS",
+    "name": "Rizq Khata",
     "slug": "genpos",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -8,18 +8,22 @@
     "scheme": "genpos",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.genpos.app"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.rizqkhata.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#EEF0FF",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.genpos.app"
+      "package": "com.rizqkhata.app"
     },
     "web": {
       "output": "server",
@@ -30,24 +34,28 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#4D4FEF",
+          "backgroundColor": "#F3F4F7",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 180,
+          "dark": {
+            "backgroundColor": "#020817",
+            "image": "./assets/images/splash-icon-dark.png"
+          }
         }
       ],
       "expo-secure-store",
       [
         "expo-camera",
         {
-          "cameraPermission": "GenPOS uses the camera to scan product barcodes.",
+          "cameraPermission": "Rizq Khata uses the camera to scan product barcodes.",
           "recordAudioAndroid": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "GenPOS uses your photos so you can add pictures of your products.",
-          "cameraPermission": "GenPOS uses the camera to photograph products and scan barcodes."
+          "photosPermission": "Rizq Khata uses your photos so you can add pictures of your products.",
+          "cameraPermission": "Rizq Khata uses the camera to photograph products and scan barcodes."
         }
       ]
     ],

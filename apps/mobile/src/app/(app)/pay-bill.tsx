@@ -14,18 +14,16 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { dueLabel, useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
-const METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'CASH', label: 'Cash' },
-  { value: 'MOBILE_MONEY', label: 'bKash / Mobile' },
-  { value: 'BANK_TRANSFER', label: 'Bank' },
-];
+const METHODS: PaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'BANK_TRANSFER'];
 
 /**
  * `/pay-bill?kind=SALARY&id=<employeeId>` or `?kind=BILL&id=<billId>` —
  * confirm what was paid and how; it is recorded as an expense.
  */
 export default function PayBillScreen() {
+  const t = useT();
   const { kind, id } = useLocalSearchParams<{ kind: 'SALARY' | 'BILL'; id: string }>();
   const payroll = usePayroll(undefined, kind === 'SALARY');
   const bills = useRecurringBills();
@@ -33,14 +31,14 @@ export default function PayBillScreen() {
   if (kind === 'SALARY') {
     if (!payroll.data) return <QueryState isLoading={payroll.isLoading} error={payroll.error} onRetry={payroll.refetch} />;
     const item = payroll.data.items.find((i) => i.employeeId === id);
-    if (!item) return <QueryState emptyTitle="Nothing to pay" emptyMessage="This salary is already paid." />;
+    if (!item) return <QueryState emptyTitle={t('payBill.nothingToPay')} emptyMessage={t('payBill.alreadyPaidBody')} />;
     return (
       <PayForm
         kind="SALARY"
         id={id}
         title={item.name}
-        subtitle={`${payroll.data.label} salary`}
-        status={item.state === 'PAID' ? 'Already paid' : dueLabel(daysFromNow(item.dueDate))}
+        subtitle={t('payBill.monthSalary', { month: payroll.data.label })}
+        status={item.state === 'PAID' ? t('payBill.alreadyPaid') : dueLabel(daysFromNow(item.dueDate), t)}
         defaultAmount={item.amount}
         month={payroll.data.month}
         alreadyPaid={item.state === 'PAID'}
@@ -50,14 +48,14 @@ export default function PayBillScreen() {
 
   if (!bills.data) return <QueryState isLoading={bills.isLoading} error={bills.error} onRetry={bills.refetch} />;
   const bill = bills.data.find((b) => b.id === id);
-  if (!bill) return <QueryState emptyTitle="Bill not found" />;
+  if (!bill) return <QueryState emptyTitle={t('payBill.billNotFound')} />;
   return (
     <PayForm
       kind="BILL"
       id={id}
       title={bill.title}
       subtitle={bill.category.name}
-      status={dueLabel(bill.daysUntil)}
+      status={dueLabel(bill.daysUntil, t)}
       defaultAmount={bill.amount}
       defaultMethod={bill.paymentMethod}
     />
@@ -94,6 +92,7 @@ function PayForm({
   alreadyPaid?: boolean;
 }) {
   const theme = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const formatCurrency = useFormatCurrency();
   const paySalary = usePaySalary();
@@ -112,12 +111,12 @@ function PayForm({
     if (!valid) return;
     setError(null);
     try {
-      if (kind === 'SALARY') await paySalary.mutateAsync({ employeeId: id, amount: value, paymentMethod: method, month });
-      else await payBill.mutateAsync({ id, amount: value, paymentMethod: method });
+      if (kind === 'SALARY') await paySalary.mutateAsync({ employeeId: id, amount: value, paymentMethod: method, month, label: `${title} · ${subtitle}` });
+      else await payBill.mutateAsync({ id, amount: value, paymentMethod: method, label: title });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not record the payment.');
+      setError(e instanceof Error ? e.message : t('payBill.couldNotRecord'));
     }
   };
 
@@ -137,14 +136,14 @@ function PayForm({
 
         <View style={{ gap: Spacing.one }}>
           <ThemedText type="small" themeColor="textSecondary">
-            Amount paid
+            {t('payBill.amountPaid')}
           </ThemedText>
           <TextInput
             value={amount}
             onChangeText={setAmount}
             keyboardType="decimal-pad"
             selectTextOnFocus
-            accessibilityLabel="Amount paid"
+            accessibilityLabel={t('payBill.amountPaid')}
             style={{
               fontSize: 44,
               fontWeight: 700,
@@ -163,9 +162,13 @@ function PayForm({
 
         <View style={{ gap: Spacing.two }}>
           <ThemedText type="small" themeColor="textSecondary">
-            Paid by
+            {t('payBill.paidBy')}
           </ThemedText>
-          <Segmented options={METHODS} value={method} onChange={setMethod} />
+          <Segmented
+            options={METHODS.map((value) => ({ value, label: t(`common.paymentMethods.${value}`) }))}
+            value={method}
+            onChange={setMethod}
+          />
         </View>
 
         {error && (
@@ -184,7 +187,7 @@ function PayForm({
           backgroundColor: theme.backgroundElement,
         }}>
         <Button
-          title={alreadyPaid ? 'Already paid' : valid ? `Mark ${formatCurrency(value)} as paid` : 'Enter an amount'}
+          title={alreadyPaid ? t('payBill.alreadyPaid') : valid ? t('payBill.markPaid', { amount: formatCurrency(value) }) : t('payBill.enterAmount')}
           onPress={submit}
           loading={busy}
           disabled={!valid}

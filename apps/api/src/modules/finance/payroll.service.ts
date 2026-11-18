@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { endOfDay, format, getDaysInMonth, isAfter, parse, startOfDay } from 'date-fns';
 import type { TenantContext } from '../../common/types.js';
-import { round2 } from '../../common/utils.js';
+import { recordedAtOrNow, round2 } from '../../common/utils.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { PaySalaryDto } from './finance.dto.js';
 import { toMonthlySalary } from './finance.helpers.js';
@@ -108,7 +108,7 @@ export class PayrollService {
           shopId: tenant.shopId,
           title: `${employee.name} · ${format(monthStart, 'MMMM')} salary`,
           amount,
-          date: new Date(),
+          date: recordedAtOrNow(input.recordedAt),
           categoryId: category.id,
           employeeId,
           paymentMethod: input.paymentMethod,

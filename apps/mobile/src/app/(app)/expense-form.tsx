@@ -16,18 +16,16 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { dayISO, formatDateTime, useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
-const METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'CASH', label: 'Cash' },
-  { value: 'MOBILE_MONEY', label: 'bKash / Mobile' },
-  { value: 'BANK_TRANSFER', label: 'Bank' },
-];
+const METHODS: PaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'BANK_TRANSFER'];
 
 type When = 'today' | 'yesterday';
 type Repeat = 'NEVER' | RecurringFrequency;
 
 /** Add (`/expense-form`) or open (`/expense-form?id=…`) an expense. */
 export default function ExpenseFormScreen() {
+  const t = useT();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const found = useExpense(id);
   if (!id) return <ExpenseForm />;
@@ -35,7 +33,7 @@ export default function ExpenseFormScreen() {
     return found.isLoading || found.error ? (
       <QueryState isLoading={found.isLoading} error={found.error} />
     ) : (
-      <QueryState emptyTitle="Expense not found" />
+      <QueryState emptyTitle={t('expenseForm.notFound')} />
     );
   }
   return <ExpenseForm expense={found.data} />;
@@ -43,6 +41,7 @@ export default function ExpenseFormScreen() {
 
 function ExpenseForm({ expense }: { expense?: Expense }) {
   const theme = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const formatCurrency = useFormatCurrency();
   const save = useSaveExpense();
@@ -70,7 +69,7 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
     if (!valid) return;
     setError(null);
     const date = expense && when === 'today' ? expense.date : dayISO(when === 'yesterday' ? -1 : 0);
-    const name = title.trim() || categoryName || 'Expense';
+    const name = title.trim() || categoryName || t('expenseForm.defaultTitle');
     try {
       await save.mutateAsync({
         id: expense?.id,
@@ -98,7 +97,7 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the expense.');
+      setError(e instanceof Error ? e.message : t('expenseForm.couldNotSave'));
     }
   };
 
@@ -109,13 +108,13 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
         await remove.mutateAsync(expense.id);
         router.back();
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not delete.');
+        setError(e instanceof Error ? e.message : t('expenseForm.couldNotDelete'));
       }
     };
     if (Platform.OS === 'web') return void doDelete();
-    Alert.alert('Delete this expense?', `${expense.title} will be removed.`, [
-      { text: 'Keep', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: doDelete },
+    Alert.alert(t('expenseForm.deleteTitle'), t('expenseForm.deleteBody', { title: expense.title }), [
+      { text: t('expenseForm.keep'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: doDelete },
     ]);
   };
 
@@ -123,8 +122,8 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen
         options={{
-          title: expense ? (locked ? 'Expense' : 'Edit expense') : 'New expense',
-          headerRight: expense && !locked ? () => <HeaderButton title="Delete" tone="danger" onPress={confirmDelete} /> : undefined,
+          title: expense ? (locked ? t('screens.expense') : t('expenseForm.edit')) : t('expenseForm.new'),
+          headerRight: expense && !locked ? () => <HeaderButton title={t('common.delete')} tone="danger" onPress={confirmDelete} /> : undefined,
         }}
       />
       <ScrollView contentContainerStyle={{ padding: Spacing.three, gap: Spacing.three }} keyboardShouldPersistTaps="handled">
@@ -133,19 +132,18 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
             <ThemedText type="title">{formatCurrency(expense!.amount)}</ThemedText>
             <ThemedText type="smallBold">{expense!.title}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              {formatDateTime(expense!.date)} · {expense!.category.name}
+              {formatDateTime(expense!.date, t)} · {expense!.category.name}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary" style={{ textAlign: 'center', marginTop: Spacing.two }}>
-              This is a payment to a supplier, recorded when you received stock or paid them. It’s kept in step
-              with the supplier’s balance, so it can’t be edited here.
+              {t('expenseForm.supplierLocked')}
             </ThemedText>
-            <Button title="Open suppliers" variant="secondary" onPress={() => router.push('/more/suppliers')} />
+            <Button title={t('expenseForm.openSuppliers')} variant="secondary" onPress={() => router.push('/more/suppliers')} />
           </View>
         ) : (
           <>
             <View style={{ gap: Spacing.one }}>
               <ThemedText type="small" themeColor="textSecondary">
-                Amount
+                {t('expenseForm.amount')}
               </ThemedText>
               <TextInput
                 value={amount}
@@ -154,7 +152,7 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
                 keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={theme.textSecondary}
-                accessibilityLabel="Amount"
+                accessibilityLabel={t('expenseForm.amount')}
                 style={{ fontSize: 40, fontWeight: 700, color: theme.text, borderBottomWidth: 2, borderColor: theme.border, paddingVertical: Spacing.one }}
               />
             </View>
@@ -169,17 +167,21 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
 
             <Segmented
               options={[
-                { value: 'today', label: expense ? 'Keep date' : 'Today' },
-                { value: 'yesterday', label: 'Yesterday' },
+                { value: 'today', label: expense ? t('expenseForm.keepDate') : t('common.today') },
+                { value: 'yesterday', label: t('common.yesterday') },
               ]}
               value={when}
               onChange={setWhen}
             />
 
-            <Segmented options={METHODS} value={method} onChange={setMethod} />
+            <Segmented
+              options={METHODS.map((value) => ({ value, label: t(`common.paymentMethods.${value}`) }))}
+              value={method}
+              onChange={setMethod}
+            />
 
             <TextField
-              label="What was it? (optional)"
+              label={t('expenseForm.whatWasIt')}
               value={title}
               onChangeText={setTitle}
               placeholder={categoryName || 'e.g. October rent'}
@@ -188,26 +190,31 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
             {!expense && (
               <View style={{ gap: Spacing.two }}>
                 <ThemedText type="small" themeColor="textSecondary">
-                  Repeat
+                  {t('expenseForm.repeat')}
                 </ThemedText>
                 <Segmented
                   options={[
-                    { value: 'NEVER', label: 'One time' },
-                    { value: 'MONTHLY', label: 'Monthly' },
-                    { value: 'WEEKLY', label: 'Weekly' },
+                    { value: 'NEVER', label: t('expenseForm.oneTime') },
+                    { value: 'MONTHLY', label: t('expenseForm.monthly') },
+                    { value: 'WEEKLY', label: t('expenseForm.weekly') },
                   ]}
                   value={repeat}
                   onChange={setRepeat}
                 />
                 {repeat !== 'NEVER' && (
                   <ThemedText type="caption" themeColor="textSecondary">
-                    We’ll remind you when the next one is due, so you can pay it in one tap.
+                    {t('expenseForm.remindHint')}
                   </ThemedText>
                 )}
               </View>
             )}
 
-            <TextField label="Note (optional)" value={notes} onChangeText={setNotes} placeholder="e.g. receipt no." />
+            <TextField
+              label={t('expenseForm.note')}
+              value={notes}
+              onChangeText={setNotes}
+              placeholder={t('expenseForm.notePlaceholder')}
+            />
           </>
         )}
 
@@ -227,7 +234,7 @@ function ExpenseForm({ expense }: { expense?: Expense }) {
             borderColor: theme.border,
             backgroundColor: theme.backgroundElement,
           }}>
-          <Button title={expense ? 'Save' : 'Add expense'} onPress={submit} loading={saving} disabled={!valid} />
+          <Button title={expense ? t('common.save') : t('expenseForm.add')} onPress={submit} loading={saving} disabled={!valid} />
         </View>
       )}
     </KeyboardAvoidingView>

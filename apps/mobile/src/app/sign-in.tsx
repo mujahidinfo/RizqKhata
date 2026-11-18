@@ -10,9 +10,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ApiError } from '@/lib/api-client';
 import { API_URL } from '@/lib/config';
 import { useSession } from '@/lib/session';
+import { useT } from '@/lib/i18n';
 
 export default function SignInScreen() {
   const { signIn } = useSession();
+  const t = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -30,12 +32,12 @@ export default function SignInScreen() {
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 400
-          ? 'Wrong email or password.'
+          ? t('auth.wrongCredentials')
           : e instanceof ApiError && e.status === 401 && e.message === 'Invalid credentials'
-            ? 'Wrong email or password.'
+            ? t('auth.wrongCredentials')
             : e instanceof Error
               ? e.message
-              : 'Something went wrong.',
+              : t('common.somethingWrong'),
       );
       setSubmitting(false);
     }
@@ -43,13 +45,13 @@ export default function SignInScreen() {
 
   return (
     <AuthScreen
-      title="GenPOS"
-      subtitle="Sign in to your shop"
+      title={t('auth.welcomeBack')}
+      subtitle={t('auth.signInSubtitle')}
       footer={
         <View style={styles.footer}>
           <View style={styles.switch}>
-            <ThemedText themeColor="textSecondary">New to GenPOS?</ThemedText>
-            <HeaderButton title="Create an account" onPress={() => router.replace('/sign-up')} />
+            <ThemedText themeColor="textSecondary">{t('auth.newHere')}</ThemedText>
+            <HeaderButton title={t('auth.createAccount')} onPress={() => router.replace('/sign-up')} />
           </View>
           {__DEV__ && (
             <ThemedText type="caption" themeColor="textSecondary" style={styles.center}>
@@ -60,7 +62,7 @@ export default function SignInScreen() {
       }>
       <GoogleButton onError={setError} />
       <TextField
-        label="Email"
+        label={t('auth.email')}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -70,7 +72,7 @@ export default function SignInScreen() {
         returnKeyType="next"
       />
       <TextField
-        label="Password"
+        label={t('auth.password')}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -84,7 +86,7 @@ export default function SignInScreen() {
           {error}
         </ThemedText>
       )}
-      <Button title="Sign in" onPress={onSubmit} loading={submitting} disabled={!canSubmit} />
+      <Button title={t('auth.signIn')} onPress={onSubmit} loading={submitting} disabled={!canSubmit} />
     </AuthScreen>
   );
 }

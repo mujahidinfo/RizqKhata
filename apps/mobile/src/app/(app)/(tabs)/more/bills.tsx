@@ -10,10 +10,12 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { dueLabel, useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
 /** Bills that repeat — rent, internet, subscriptions. Pay one when it falls due. */
 export default function BillsScreen() {
   const theme = useTheme();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
   const query = useRecurringBills();
   const bills = query.data ?? [];
@@ -42,18 +44,19 @@ export default function BillsScreen() {
             isLoading={query.isLoading}
             error={query.error}
             onRetry={query.refetch}
-            emptyTitle="No repeating bills"
-            emptyMessage="Add rent, internet or any bill that comes every week or month. We’ll remind you when it’s due."
+            emptyTitle={t('bills.noBills')}
+            emptyMessage={t('bills.noBillsHint')}
           />
         }
       />
-      <Fab label="Add bill" onPress={() => router.push('/recurring-form')} />
+      <Fab label={t('bills.addBill')} onPress={() => router.push('/recurring-form')} />
     </View>
   );
 }
 
 function BillCard({ bill, amount }: { bill: RecurringBill; amount: string }) {
   const theme = useTheme();
+  const t = useT();
   const overdue = bill.isActive && bill.daysUntil < 0;
   const soon = bill.isActive && bill.daysUntil <= 3;
   return (
@@ -78,7 +81,7 @@ function BillCard({ bill, amount }: { bill: RecurringBill; amount: string }) {
           {bill.title}
         </ThemedText>
         <ThemedText type="caption" style={{ color: overdue ? theme.danger : theme.textSecondary }} numberOfLines={1}>
-          {bill.isActive ? dueLabel(bill.daysUntil) : 'Paused'} · {bill.frequency === 'WEEKLY' ? 'every week' : 'every month'}
+          {bill.isActive ? dueLabel(bill.daysUntil, t) : t('bills.paused')} · {bill.frequency === 'WEEKLY' ? t('bills.everyWeek') : t('bills.everyMonth')}
         </ThemedText>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 6 }}>
@@ -88,12 +91,12 @@ function BillCard({ bill, amount }: { bill: RecurringBill; amount: string }) {
         {bill.isActive && (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Pay ${bill.title}`}
+            accessibilityLabel={t('topBar.payA11y', { title: bill.title })}
             hitSlop={8}
             onPress={() => router.push({ pathname: '/pay-bill', params: { kind: 'BILL', id: bill.id } })}
             style={{ paddingHorizontal: Spacing.three, paddingVertical: 5, borderRadius: 999, backgroundColor: `${theme.primary}1A` }}>
             <ThemedText type="smallBold" themeColor="primary">
-              Pay
+              {t('topBar.pay')}
             </ThemedText>
           </Pressable>
         )}

@@ -30,7 +30,7 @@ export function FinanceNav() {
             className={cn(
               "flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0",
               active
-                ? "border-indigo-600 text-indigo-600"
+                ? "border-brand-600 text-brand-600"
                 : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300",
             )}
           >

@@ -93,7 +93,7 @@ function TextInput({ value, onChange, type = "text", placeholder, className }: {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={cn(
-        "w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors",
+        "w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors",
         className
       )}
     />
@@ -162,7 +162,7 @@ function ShopTab() {
             placeholder="123 Main St, City, Country"
             value={form.address}
             onChange={(e) => set("address")(e.target.value)}
-            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
           />
         </Field>
         <SaveButton onClick={handleSave} isPending={updateShop.isPending} label={t("common.saveChanges")} />
@@ -225,13 +225,13 @@ function CurrencyTab() {
   return (
     <div className="space-y-5">
       {/* Active currency banner */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-2xl">
-        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-          <span className="text-sm font-black text-indigo-700">{getCurrencySymbol(activeCurrency)}</span>
+      <div className="flex items-center gap-3 px-4 py-3 bg-brand-50 border border-brand-100 rounded-2xl">
+        <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center shrink-0">
+          <span className="text-sm font-black text-brand-700">{getCurrencySymbol(activeCurrency)}</span>
         </div>
         <div>
-          <p className="text-sm font-bold text-indigo-900">{t("settings.activeCurrency", { currency: activeCurrency })}</p>
-          <p className="text-xs text-indigo-600">{t("settings.activeCurrencyDesc")}</p>
+          <p className="text-sm font-bold text-brand-900">{t("settings.activeCurrency", { currency: activeCurrency })}</p>
+          <p className="text-xs text-brand-600">{t("settings.activeCurrencyDesc")}</p>
         </div>
       </div>
 
@@ -247,7 +247,7 @@ function CurrencyTab() {
             placeholder={t("settings.searchCurrencies")}
             value={currencySearch}
             onChange={(e) => setCurrencySearch(e.target.value)}
-            className="w-full h-10 pl-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full h-10 pl-3 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
           {currencySearch && (
             <button onClick={() => setCurrencySearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-slate-400 hover:text-slate-700">
@@ -268,8 +268,8 @@ function CurrencyTab() {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all active:scale-[0.97]",
                   isSelected
-                    ? "bg-indigo-600 border-indigo-600 text-white"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50"
+                    ? "bg-brand-600 border-brand-600 text-white"
+                    : "bg-white border-slate-200 text-slate-700 hover:border-brand-300 hover:bg-brand-50"
                 )}
               >
                 <span className={cn("text-base font-black w-6 shrink-0 text-center", isSelected ? "text-white" : "text-slate-900")}>
@@ -277,7 +277,7 @@ function CurrencyTab() {
                 </span>
                 <div className="min-w-0">
                   <p className={cn("text-xs font-bold truncate", isSelected ? "text-white" : "text-slate-800")}>{c.code}</p>
-                  <p className={cn("text-[10px] truncate", isSelected ? "text-indigo-200" : "text-slate-400")}>{c.name}</p>
+                  <p className={cn("text-[10px] truncate", isSelected ? "text-brand-200" : "text-slate-400")}>{c.name}</p>
                 </div>
                 {isSelected && <Check className="h-3.5 w-3.5 ml-auto shrink-0 text-white" />}
               </button>
@@ -371,15 +371,15 @@ function LanguageTab() {
   return (
     <div className="space-y-5">
       {/* Active language banner */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-2xl">
-        <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-          <Languages className="h-4 w-4 text-indigo-700" />
+      <div className="flex items-center gap-3 px-4 py-3 bg-brand-50 border border-brand-100 rounded-2xl">
+        <div className="w-9 h-9 rounded-xl bg-brand-100 flex items-center justify-center shrink-0">
+          <Languages className="h-4 w-4 text-brand-700" />
         </div>
         <div>
-          <p className="text-sm font-bold text-indigo-900">
+          <p className="text-sm font-bold text-brand-900">
             {t("settings.activeLanguage", { language: activeMeta.nativeLabel })}
           </p>
-          <p className="text-xs text-indigo-600">{t("settings.activeLanguageDesc")}</p>
+          <p className="text-xs text-brand-600">{t("settings.activeLanguageDesc")}</p>
         </div>
       </div>
 
@@ -399,8 +399,8 @@ function LanguageTab() {
                 className={cn(
                   "flex items-center gap-3 px-4 py-3.5 rounded-xl border text-left transition-all active:scale-[0.98] disabled:opacity-60",
                   isSelected
-                    ? "bg-indigo-600 border-indigo-600 text-white"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50",
+                    ? "bg-brand-600 border-brand-600 text-white"
+                    : "bg-white border-slate-200 text-slate-700 hover:border-brand-300 hover:bg-brand-50",
                 )}
               >
                 <span className={cn("text-lg font-black w-9 shrink-0 text-center", isSelected ? "text-white" : "text-slate-900")}>
@@ -408,7 +408,7 @@ function LanguageTab() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className={cn("text-sm font-bold truncate", isSelected ? "text-white" : "text-slate-800")}>{lang.nativeLabel}</p>
-                  <p className={cn("text-xs truncate", isSelected ? "text-indigo-200" : "text-slate-400")}>{lang.label}</p>
+                  <p className={cn("text-xs truncate", isSelected ? "text-brand-200" : "text-slate-400")}>{lang.label}</p>
                 </div>
                 {isSelected && <Check className="h-4 w-4 ml-auto shrink-0 text-white" />}
               </button>
@@ -470,7 +470,7 @@ function TeamTab({ currentUser }: { currentUser: AuthUser }) {
       {/* Add user form */}
       {showAddForm && (
         <SectionCard
-          icon={<UserPlus className="h-4 w-4 text-indigo-500" />}
+          icon={<UserPlus className="h-4 w-4 text-brand-500" />}
           title={t("settings.addTeamMember")}
           desc={t("settings.addTeamMemberDesc")}
           accent
@@ -489,7 +489,7 @@ function TeamTab({ currentUser }: { currentUser: AuthUser }) {
                   placeholder={t("settings.minChars")}
                   value={newUser.password}
                   onChange={(e) => setNewUser((p) => ({ ...p, password: e.target.value }))}
-                  className="w-full h-11 pl-3 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full h-11 pl-3 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
                 <button
                   type="button"
@@ -504,7 +504,7 @@ function TeamTab({ currentUser }: { currentUser: AuthUser }) {
               <select
                 value={newUser.role}
                 onChange={(e) => setNewUser((p) => ({ ...p, role: e.target.value as Role }))}
-                className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
               >
                 {ROLES.map((r) => (
                   <option key={r} value={r}>{t(ROLE_CONFIG[r].labelKey)} — {t(ROLE_CONFIG[r].descKey)}</option>
@@ -522,7 +522,7 @@ function TeamTab({ currentUser }: { currentUser: AuthUser }) {
             <button
               onClick={handleAddUser}
               disabled={createUser.isPending}
-              className="flex-[2] h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+              className="flex-[2] h-11 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {createUser.isPending
                 ? <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -543,7 +543,7 @@ function TeamTab({ currentUser }: { currentUser: AuthUser }) {
           !showAddForm ? (
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center gap-1.5 h-8 px-3 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all"
+              className="flex items-center gap-1.5 h-8 px-3 bg-brand-600 text-white rounded-lg text-xs font-bold hover:bg-brand-700 transition-all"
             >
               <Plus className="h-3.5 w-3.5" /> {t("settings.addMember")}
             </button>
@@ -571,7 +571,7 @@ function TeamTab({ currentUser }: { currentUser: AuthUser }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-semibold text-slate-800 truncate">{u.name}</p>
-                      {isSelf && <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{t("settings.you")}</span>}
+                      {isSelf && <span className="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">{t("settings.you")}</span>}
                     </div>
                     <p className="text-xs text-slate-400 truncate">{u.email}</p>
                   </div>
@@ -582,7 +582,7 @@ function TeamTab({ currentUser }: { currentUser: AuthUser }) {
                       <select
                         value={editRole}
                         onChange={(e) => setEditRole(e.target.value as Role)}
-                        className="h-8 px-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="h-8 px-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand-500"
                       >
                         {ROLES.map((r) => (
                           <option key={r} value={r}>{t(ROLE_CONFIG[r].labelKey)}</option>
@@ -590,7 +590,7 @@ function TeamTab({ currentUser }: { currentUser: AuthUser }) {
                       </select>
                       <button
                         onClick={() => updateUser.mutate({ id: u.id, role: editRole })}
-                        className="w-7 h-7 flex items-center justify-center bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        className="w-7 h-7 flex items-center justify-center bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
                       >
                         <Check className="h-3 w-3" />
                       </button>
@@ -656,7 +656,7 @@ function PasswordInput({ label, value, onChange, show, onToggle, autoComplete }:
           value={value}
           onChange={(e) => onChange(e.target.value)}
           autoComplete={autoComplete}
-          className="w-full h-11 pl-3 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full h-11 pl-3 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
         <button type="button" onClick={onToggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
           {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -710,8 +710,8 @@ function AccountTab({ user }: { user: AuthUser }) {
         desc={t("settings.myAccountDesc")}
       >
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center shrink-0">
-            <span className="text-xl font-black text-indigo-700">{user.name?.charAt(0).toUpperCase()}</span>
+          <div className="w-14 h-14 rounded-2xl bg-brand-100 flex items-center justify-center shrink-0">
+            <span className="text-xl font-black text-brand-700">{user.name?.charAt(0).toUpperCase()}</span>
           </div>
           <div>
             <p className="text-base font-bold text-slate-900">{user.name}</p>
@@ -807,7 +807,7 @@ function SectionCard({ icon, title, desc, children, action, accent }: {
   return (
     <div className={cn(
       "bg-white rounded-2xl border shadow-sm p-5 space-y-5",
-      accent ? "border-indigo-100 shadow-indigo-50" : "border-slate-100"
+      accent ? "border-brand-100 shadow-brand-50" : "border-slate-100"
     )}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -835,7 +835,7 @@ function SaveButton({ onClick, isPending, label = "Save Changes" }: {
     <button
       onClick={onClick}
       disabled={isPending}
-      className="h-11 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+      className="h-11 px-6 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
     >
       {isPending
         ? <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />

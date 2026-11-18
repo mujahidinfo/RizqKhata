@@ -4,6 +4,7 @@ import { Icon } from '@/components/icon';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 /**
  * Floating summary of the current sale on a clean white card. The left side
@@ -21,6 +22,7 @@ export function CartBar({
   onCharge: () => void;
 }) {
   const theme = useTheme();
+  const t = useT();
   return (
     <View
       style={{
@@ -38,7 +40,7 @@ export function CartBar({
       <Pressable
         onPress={onOpenCart}
         accessibilityRole="button"
-        accessibilityLabel={`Review cart, ${itemCount} items, ${total}`}
+        accessibilityLabel={t('sellParts.reviewCartA11y', { count: itemCount, total })}
         style={({ pressed }) => ({
           flex: 1,
           flexDirection: 'row',
@@ -81,7 +83,7 @@ export function CartBar({
         </View>
         <View style={{ flex: 1 }}>
           <ThemedText type="caption" themeColor="textSecondary">
-            Total
+            {t('common.total')}
           </ThemedText>
           <ThemedText
             type="smallBold"
@@ -95,7 +97,7 @@ export function CartBar({
       <Pressable
         onPress={onCharge}
         accessibilityRole="button"
-        accessibilityLabel={`Charge ${total}`}
+        accessibilityLabel={t('sellParts.chargeA11y', { total })}
         style={({ pressed }) => ({
           flexDirection: 'row',
           alignItems: 'center',
@@ -108,7 +110,7 @@ export function CartBar({
           opacity: pressed ? 0.85 : 1,
         })}>
         <ThemedText type="smallBold" style={{ color: theme.onPrimary, fontSize: 16 }}>
-          Charge
+          {t('sellParts.charge')}
         </ThemedText>
         <Icon name="chevronRight" size={14} color={theme.onPrimary} weight="bold" />
       </Pressable>

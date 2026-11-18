@@ -8,6 +8,7 @@ import { Avatar } from '@/components/avatar';
 import { Badge } from '@/components/badge';
 import { Fab, FAB_CLEARANCE } from '@/components/fab';
 import { FilterBar } from '@/components/filter-bar';
+import { TabScreen } from '@/components/safe-area';
 import { IconTile, TINT } from '@/components/icon-tile';
 import { QueryState } from '@/components/query-state';
 import { ThemedText } from '@/components/themed-text';
@@ -15,12 +16,14 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
 type Filter = 'due';
 
 /** Who you buy from, with what you owe each of them front and centre. */
 export default function SuppliersScreen() {
   const theme = useTheme();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
   const query = useSuppliers();
   const [search, setSearch] = useState('');
@@ -37,16 +40,20 @@ export default function SuppliersScreen() {
     .sort((a, b) => b.due - a.due || a.name.localeCompare(b.name));
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <TabScreen style={{ backgroundColor: theme.background }}>
       <FilterBar
         search={search}
         onSearch={setSearch}
-        placeholder="Search suppliers"
-        chips={[{ label: 'All' }, { label: owed.length ? `You owe (${owed.length})` : 'You owe', value: 'due' as Filter }]}
+        placeholder={t('suppliers.searchPlaceholder')}
+        chips={[
+          { label: t('common.all') },
+          { label: owed.length ? t('suppliers.youOweCount', { count: owed.length }) : t('suppliers.youOwe'), value: 'due' as Filter },
+        ]}
         selected={filter}
         onSelect={setFilter}
       />
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={shown}
         keyExtractor={(s) => s.id}
         keyboardShouldPersistTaps="handled"
@@ -68,14 +75,14 @@ export default function SuppliersScreen() {
               <IconTile name="wallet" tint={TINT.rose} size={44} />
               <View style={{ flex: 1 }}>
                 <ThemedText type="caption" themeColor="textSecondary">
-                  You owe in total
+                  {t('suppliers.owedTotal')}
                 </ThemedText>
                 <ThemedText style={{ fontSize: 26, lineHeight: 32, fontWeight: 700, fontVariant: ['tabular-nums'] }} themeColor="danger">
                   {formatCurrency(totalDue)}
                 </ThemedText>
               </View>
               <ThemedText type="caption" themeColor="textSecondary">
-                {owed.length} supplier{owed.length === 1 ? '' : 's'}
+                {t('suppliers.suppliersCount', { count: owed.length })}
               </ThemedText>
             </View>
           ) : undefined
@@ -86,23 +93,24 @@ export default function SuppliersScreen() {
             isLoading={query.isLoading}
             error={query.error}
             onRetry={query.refetch}
-            emptyTitle={needle || filter ? 'No matching suppliers' : 'No suppliers yet'}
-            emptyMessage={needle || filter ? 'Try a different search or filter.' : 'Add the people you buy stock from to track what you owe them.'}
+            emptyTitle={needle || filter ? t('suppliers.noMatching') : t('suppliers.noSuppliers')}
+            emptyMessage={needle || filter ? t('suppliers.tryDifferent') : t('suppliers.emptyHint')}
           />
         }
       />
-      <Fab label="Add supplier" onPress={() => router.push('/supplier-form')} />
-    </View>
+      <Fab label={t('suppliers.addSupplier')} onPress={() => router.push('/supplier-form')} />
+    </TabScreen>
   );
 }
 
 function SupplierCard({ supplier, due, bought }: { supplier: Supplier; due: string; bought: string }) {
   const theme = useTheme();
+  const t = useT();
   const owed = supplier.due > 0;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${supplier.name}, ${owed ? `you owe ${due}` : 'settled'}`}
+      accessibilityLabel={owed ? t('suppliers.a11yOwe', { name: supplier.name, amount: due }) : t('suppliers.a11ySettled', { name: supplier.name })}
       onPress={() => router.push({ pathname: '/more/supplier/[id]', params: { id: supplier.id } })}
       style={({ pressed }) => ({
         flexDirection: 'row',
@@ -122,7 +130,7 @@ function SupplierCard({ supplier, due, bought }: { supplier: Supplier; due: stri
         </ThemedText>
         <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1}>
           {supplier.phone ? `${supplier.phone} · ` : ''}
-          {supplier.totalPurchased > 0 ? `Bought ${bought}` : 'No deliveries yet'}
+          {supplier.totalPurchased > 0 ? t('suppliers.bought', { amount: bought }) : t('suppliers.noDeliveries')}
         </ThemedText>
       </View>
       <View style={{ alignItems: 'flex-end', gap: 4 }}>
@@ -131,10 +139,10 @@ function SupplierCard({ supplier, due, bought }: { supplier: Supplier; due: stri
             <ThemedText type="smallBold" themeColor="danger" style={{ fontSize: 16, fontVariant: ['tabular-nums'] }}>
               {due}
             </ThemedText>
-            <Badge label="Due" tone="danger" />
+            <Badge label={t('suppliers.due')} tone="danger" />
           </>
         ) : (
-          <Badge label="Settled" tone="success" />
+          <Badge label={t('suppliers.settled')} tone="success" />
         )}
       </View>
     </Pressable>

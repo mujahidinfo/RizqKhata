@@ -163,8 +163,8 @@ export function BudgetView() {
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{t("finance.totalBudgeted")}</p>
                 <p className="text-xl font-bold text-slate-900 mt-1">{formatCurrency(totalBudgeted)}</p>
               </div>
-              <div className="p-2 rounded-xl bg-indigo-50">
-                <Target className="h-4 w-4 text-indigo-600" />
+              <div className="p-2 rounded-xl bg-brand-50">
+                <Target className="h-4 w-4 text-brand-600" />
               </div>
             </div>
           </CardContent>
@@ -278,7 +278,7 @@ export function BudgetView() {
                       <div
                         className={cn(
                           "h-full rounded-full transition-all",
-                          isOver ? "bg-red-500" : isWarning ? "bg-amber-400" : "bg-indigo-500",
+                          isOver ? "bg-red-500" : isWarning ? "bg-amber-400" : "bg-brand-500",
                         )}
                         style={{ width: `${Math.min(pct, 100)}%` }}
                       />

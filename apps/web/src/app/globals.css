@@ -26,6 +26,18 @@
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
+    /* Rizq Khata brand green (from the logo, #17694C = 700). Used wherever the
+       UI used to hard-code indigo: bg-brand-600, text-brand-700, ring-brand-500… */
+    --color-brand-50: #EDF7F2;
+    --color-brand-100: #D3EDE0;
+    --color-brand-200: #A8DBC2;
+    --color-brand-300: #74C29F;
+    --color-brand-400: #3FA57A;
+    --color-brand-500: #22895F;
+    --color-brand-600: #1A7A57;
+    --color-brand-700: #17694C;
+    --color-brand-800: #13553E;
+    --color-brand-900: #0F4332;
     --animate-accordion-down: accordion-down 0.2s ease-out;
     --animate-accordion-up: accordion-up 0.2s ease-out;
 }
@@ -37,7 +49,7 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 239 84% 62%;
+    --primary: 158.8 64.1% 25.1%; /* #17694C logo green */
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 94%;
     --secondary-foreground: 222 47% 11%;
@@ -49,7 +61,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 239 84% 62%;
+    --ring: 158.8 64.1% 25.1%;
     --radius: 0.75rem;
 }
 
@@ -60,8 +72,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 157.2 64.3% 32.9%; /* #1E8A61, lifted to read on dark */
+    --primary-foreground: 0 0% 100%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -72,7 +84,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 157.2 64.3% 32.9%;
 }
 
 @layer base {

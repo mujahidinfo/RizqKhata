@@ -68,7 +68,7 @@ function InstructionStep({ n, icon, children }: {
 }) {
   return (
     <li className="flex items-start gap-3">
-      <span className="w-6 h-6 rounded-lg bg-indigo-600 text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5">
+      <span className="w-6 h-6 rounded-lg bg-brand-600 text-white text-[11px] font-black flex items-center justify-center shrink-0 mt-0.5">
         {n}
       </span>
       <span className="flex-1 text-sm text-slate-600 leading-relaxed flex items-center gap-2 flex-wrap">
@@ -270,7 +270,7 @@ export function InstallPrompt() {
           </button>
 
           <div className="flex items-start gap-3 pr-6">
-            <div className="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-indigo-200">
+            <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center shrink-0 shadow-sm shadow-brand-200">
               <Download className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
@@ -301,7 +301,7 @@ export function InstallPrompt() {
             </button>
             <button
               onClick={handleInstall}
-              className="flex-[1.6] h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors active:scale-[0.98] shadow-sm shadow-indigo-200"
+              className="flex-[1.6] h-11 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold flex items-center justify-center gap-2 transition-colors active:scale-[0.98] shadow-sm shadow-brand-200"
             >
               <Download className="h-4 w-4" />
               {deferred ? t("pwa.install") : t("pwa.howToInstall")}

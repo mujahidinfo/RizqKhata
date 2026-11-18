@@ -21,6 +21,31 @@ datasource db {
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
+/// What the business does: decides which modules the apps show.
+enum BusinessType {
+  RETAIL
+  SERVICE
+  HYBRID
+}
+
+/// Catalog items are goods (stocked) or services (never touch inventory).
+enum ProductKind {
+  PRODUCT
+  SERVICE
+}
+
+/// A service job's stage. DELIVERED is set only by billing the job.
+enum JobStatus {
+  RECEIVED
+  DIAGNOSING
+  WAITING_APPROVAL
+  WAITING_PARTS
+  IN_REPAIR
+  READY
+  DELIVERED
+  CANCELLED
+}
+
 enum MemberRole {
   OWNER
   MANAGER
@@ -92,16 +117,20 @@ enum BudgetPeriod {
 // ─── Tenancy ─────────────────────────────────────────────────────────────────
 
 model Business {
-  id        String   @id @default(cuid())
-  name      String
+  id              String       @id @default(cuid())
+  name            String
   // Prices in the shared catalog are in this currency, so it lives here and
   // not per branch.
-  currency  String   @default("BDT")
-  language  String   @default("bn")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  currency        String       @default("BDT")
+  language        String       @default("bn")
+  type            BusinessType @default(RETAIL)
+  /// Service template chosen at setup (e.g. "mobile_repair"); drives wording and intake fields.
+  serviceTemplate String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   shops             Shop[]
+  serviceJobs       ServiceJob[]
   members           Membership[]
   categories        Category[]
   products          Product[]
@@ -116,6 +145,7 @@ model Business {
   suppliers         Supplier[]
   purchases         Purchase[]
   supplierPayments  SupplierPayment[]
+  notes             Note[]
 }
 
 model Shop {
@@ -144,6 +174,7 @@ model Shop {
   recurringExpenses RecurringExpense[]
   budgets           Budget[]
   purchases         Purchase[]
+  serviceJobs       ServiceJob[]
 
   @@index([businessId])
 }
@@ -182,10 +213,34 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  memberships Membership[]
-  orders      Order[]
-  purchases   Purchase[]
-  sessions    Session[]
+  memberships     Membership[]
+  orders          Order[]
+  purchases       Purchase[]
+  sessions        Session[]
+  idempotencyKeys IdempotencyKey[]
+  notes           Note[]
+  serviceJobs     ServiceJob[]
+  jobEvents       ServiceJobEvent[]
+}
+
+/// Remembers the result of a write sent with an `Idempotency-Key` header so a
+/// retried request (e.g. the mobile app's offline outbox resending after a
+/// dropped connection) returns the original result instead of writing twice.
+model IdempotencyKey {
+  id         String   @id @default(cuid())
+  userId     String
+  key        String
+  method     String
+  path       String
+  /// null while the first request is still running
+  statusCode Int?
+  response   Json?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([createdAt])
 }
 
 model Session {
@@ -219,24 +274,28 @@ model Category {
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  businessId  String
-  name        String
-  description String?
-  sku         String?
-  barcode     String?
-  price       Float
-  costPrice   Float    @default(0)
-  categoryId  String?
-  imageUrl    String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String      @id @default(cuid())
+  businessId   String
+  name         String
+  description  String?
+  sku          String?
+  barcode      String?
+  price        Float
+  costPrice    Float       @default(0)
+  categoryId   String?
+  imageUrl     String?
+  kind         ProductKind @default(PRODUCT)
+  /// Services (and parts) can carry a warranty, printed on the receipt.
+  warrantyDays Int?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   business       Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
   category       Category?        @relation(fields: [categoryId], references: [id])
   variants       ProductVariant[]
   orderItems     OrderItem[]
+  jobLines       ServiceJobLine[]
   purchaseItems  PurchaseItem[]
   stockMovements StockMovement[]
 
@@ -317,8 +376,9 @@ model Customer {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   orders   Order[]
+  jobs     ServiceJob[]
 
   @@unique([businessId, email])
   @@index([businessId, phone])
@@ -347,6 +407,8 @@ model Order {
   paymentMethod  PaymentMethod @default(CASH)
   // Cash handed over by the customer, so receipts can show change given.
   amountTendered Float?
+  /// Advance already paid on a service job, deducted from what's due at billing.
+  depositApplied Float         @default(0)
   note           String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -357,6 +419,7 @@ model Order {
   cashier  User        @relation(fields: [cashierId], references: [id])
   items    OrderItem[]
   refunds  Refund[]
+  job      ServiceJob?
 
   @@index([shopId, createdAt])
   @@index([businessId])
@@ -605,4 +668,100 @@ model SupplierPayment {
   expense  Expense?
 
   @@index([supplierId])
+}
+
+// ─── Notes ───────────────────────────────────────────────────────────────────
+
+/// A quick note for later. Private to its author unless `shared`, in which case
+/// everyone in the business sees (and can edit) it.
+model Note {
+  id         String   @id @default(cuid())
+  businessId String
+  authorId   String
+  title      String   @default("")
+  body       String   @default("")
+  pinned     Boolean  @default(false)
+  /// Ticked off (a note can double as a to-do).
+  done       Boolean  @default(false)
+  shared     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, authorId])
+  @@index([businessId, shared])
+}
+
+// ─── Service jobs (repair shops & other service businesses) ─────────────────
+
+/// Work taken in from a customer (e.g. a phone to repair). Billing it creates
+/// a normal Order (receipts, reports and stock all reuse the sales path).
+model ServiceJob {
+  id            String         @id @default(cuid())
+  businessId    String
+  shopId        String
+  jobNumber     String         @unique
+  customerId    String
+  createdById   String
+  /// Short summary for lists and search, e.g. "Samsung A52".
+  device        String         @default("")
+  /// Template intake fields (brand, model, IMEI, lock code, accessories, condition…).
+  details       Json           @default("{}")
+  problem       String
+  status        JobStatus      @default(RECEIVED)
+  estimate      Float?
+  advance       Float          @default(0)
+  advanceMethod PaymentMethod?
+  promisedAt    DateTime?
+  warrantyDays  Int?
+  orderId       String?        @unique
+  deliveredAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  business  Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  shop      Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customer  Customer          @relation(fields: [customerId], references: [id])
+  createdBy User              @relation(fields: [createdById], references: [id])
+  order     Order?            @relation(fields: [orderId], references: [id])
+  lines     ServiceJobLine[]
+  events    ServiceJobEvent[]
+
+  @@index([shopId, status])
+  @@index([businessId, customerId])
+}
+
+/// A service or part on a job; becomes an order line when the job is billed.
+model ServiceJobLine {
+  id        String   @id @default(cuid())
+  jobId     String
+  productId String
+  variantId String?
+  name      String
+  price     Float
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  job     ServiceJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  product Product    @relation(fields: [productId], references: [id])
+
+  @@index([jobId])
+}
+
+/// The job's timeline: created, status changes and notes.
+model ServiceJobEvent {
+  id          String     @id @default(cuid())
+  jobId       String
+  type        String // CREATED | STATUS | NOTE
+  status      JobStatus?
+  note        String?
+  createdById String
+  createdAt   DateTime   @default(now())
+
+  job       ServiceJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdBy User       @relation(fields: [createdById], references: [id])
+
+  @@index([jobId, createdAt])
 }

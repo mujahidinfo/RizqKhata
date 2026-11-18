@@ -5,6 +5,7 @@ import type { SalesChartPoint } from '@/api/types';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 const CHART_HEIGHT = 120;
 const MAX_BAR_WIDTH = 24;
@@ -22,6 +23,7 @@ export function RevenueBars({
   formatValue: (n: number) => string;
 }) {
   const theme = useTheme();
+  const t = useT();
   const [selected, setSelected] = useState(data.length - 1);
   const max = Math.max(...data.map((d) => d.revenue), 0);
   const point = data[selected] ?? data[data.length - 1];
@@ -32,7 +34,7 @@ export function RevenueBars({
     <View style={styles.container}>
       <View>
         <ThemedText type="caption" themeColor="textSecondary">
-          {selected === data.length - 1 ? 'Today' : point.date}
+          {selected === data.length - 1 ? t('common.today') : point.date}
         </ThemedText>
         <ThemedText type="subtitle">{formatValue(point.revenue)}</ThemedText>
       </View>

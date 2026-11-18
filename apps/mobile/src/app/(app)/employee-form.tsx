@@ -12,6 +12,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 /** Someone on payroll who doesn't sign in: `/employee-form` or `/employee-form?id=…`. */
 export default function EmployeeFormScreen() {
@@ -25,6 +26,7 @@ export default function EmployeeFormScreen() {
 
 function EmployeeForm({ item }: { item?: PayrollItem }) {
   const theme = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const save = useSaveEmployee();
 
@@ -63,7 +65,7 @@ function EmployeeForm({ item }: { item?: PayrollItem }) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save.');
+      setError(e instanceof Error ? e.message : t('employeeForm.couldNotSave'));
     }
   };
 
@@ -71,14 +73,18 @@ function EmployeeForm({ item }: { item?: PayrollItem }) {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ padding: Spacing.three, gap: Spacing.three }} keyboardShouldPersistTaps="handled">
         <ThemedText type="small" themeColor="textSecondary">
-          For people who get a salary but don’t sign in to the app. They’ll show up under Salaries, ready to pay.
+          {t('employeeForm.intro')}
         </ThemedText>
-        <TextField label="Name" value={name} onChangeText={setName} autoCapitalize="words" autoFocus={!item} />
-        <TextField label="Job" value={position} onChangeText={setPosition} placeholder="e.g. Helper, Driver" autoCapitalize="words" />
-        <TextField label="Phone (optional)" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-        <TextField label="Monthly salary" value={salary} onChangeText={setSalary} keyboardType="decimal-pad" placeholder="0" />
+        <TextField label={t('employeeForm.name')} value={name} onChangeText={setName} autoCapitalize="words" autoFocus={!item} />
         <TextField
-          label="Paid on day of the month (1–28)"
+          label={t('employeeForm.job')}
+          value={position}
+          onChangeText={setPosition}
+          placeholder={t('employeeForm.jobPlaceholder')} autoCapitalize="words" />
+        <TextField label={t('employeeForm.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+        <TextField label={t('employeeForm.monthlySalary')} value={salary} onChangeText={setSalary} keyboardType="decimal-pad" placeholder="0" />
+        <TextField
+          label={t('employeeForm.payDay')}
           value={payDay}
           onChangeText={(t) => setPayDay(t.replace(/\D/g, '').slice(0, 2))}
           keyboardType="number-pad"
@@ -86,12 +92,12 @@ function EmployeeForm({ item }: { item?: PayrollItem }) {
         {item && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}>
             <View style={{ flex: 1 }}>
-              <ThemedText>On payroll</ThemedText>
+              <ThemedText>{t('employeeForm.onPayroll')}</ThemedText>
               <ThemedText type="caption" themeColor="textSecondary">
-                Turn off when they leave. Past salaries stay in your expenses.
+                {t('employeeForm.onPayrollHint')}
               </ThemedText>
             </View>
-            <Switch value={active} onValueChange={setActive} trackColor={{ true: theme.primary }} accessibilityLabel="On payroll" />
+            <Switch value={active} onValueChange={setActive} trackColor={{ true: theme.primary }} accessibilityLabel={t('employeeForm.onPayroll')} />
           </View>
         )}
         {error && (
@@ -108,7 +114,7 @@ function EmployeeForm({ item }: { item?: PayrollItem }) {
           borderColor: theme.border,
           backgroundColor: theme.backgroundElement,
         }}>
-        <Button title={item ? 'Save' : 'Add to payroll'} onPress={submit} loading={save.isPending} disabled={!valid} />
+        <Button title={item ? t('common.save') : t('employeeForm.add')} onPress={submit} loading={save.isPending} disabled={!valid} />
       </View>
     </KeyboardAvoidingView>
   );

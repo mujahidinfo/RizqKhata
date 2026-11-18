@@ -9,7 +9,7 @@ import {
   setActiveShopId,
   setTokens,
 } from '@/lib/api-client';
-import { queryClient } from '@/lib/query-client';
+import { clearPersistedCache, queryClient } from '@/lib/query-client';
 import { secureStorage } from '@/lib/secure-storage';
 
 const KEYS = {
@@ -47,6 +47,9 @@ export type CreateBusinessInput = {
   name: string;
   phone?: string;
   currency: string;
+  language?: 'en' | 'bn';
+  businessType?: 'RETAIL' | 'SERVICE' | 'HYBRID';
+  serviceTemplate?: 'mobile_repair';
 };
 
 type SessionContextValue = State & {
@@ -128,6 +131,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       setActiveShopId(null);
       void clearPersisted();
       queryClient.clear();
+      void clearPersistedCache();
       setState(signedOut);
     };
 
@@ -214,6 +218,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       setActiveShopId(null);
       await clearPersisted();
       queryClient.clear();
+      void clearPersistedCache();
       setState(signedOut);
       // Best effort: revoke the refresh token server-side.
       if (refreshToken) {
@@ -243,7 +248,14 @@ export function SessionProvider({ children }: PropsWithChildren) {
     },
 
     refreshWorkspaces: async () => {
-      enter(state.user!, await fetchWorkspaces(), state.activeShop?.id ?? null);
+      const workspaces = await fetchWorkspaces();
+      const previous = state.activeShop?.id ?? null;
+      // The active branch may be gone (deleted): its cached data must go too.
+      if (previous && resolveShop(workspaces, previous)?.id !== previous) {
+        queryClient.clear();
+        void clearPersistedCache();
+      }
+      enter(state.user!, workspaces, previous);
     },
   };
 

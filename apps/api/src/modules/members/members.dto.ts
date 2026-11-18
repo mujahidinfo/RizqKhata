@@ -7,7 +7,7 @@ export class AddMemberDto extends createZodDto(
   z.object({
     name: z.string().trim().min(1).max(100),
     email: z.email().transform((e) => e.trim().toLowerCase()),
-    // Needed only when the person has no GenPOS account yet.
+    // Needed only when the person has no Rizq Khata account yet.
     password: z.string().min(8).max(200).optional(),
     role: roleSchema,
     // Pin the staff member to one branch; omit for all branches.

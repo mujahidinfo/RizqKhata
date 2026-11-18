@@ -11,11 +11,13 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/lib/api-client';
+import { useT } from '@/lib/i18n';
 
 const MIN_PASSWORD = 8;
 
 export default function ChangePasswordScreen() {
   const theme = useTheme();
+  const t = useT();
   const insets = useSafeAreaInsets();
   const change = useChangePassword();
   const [current, setCurrent] = useState('');
@@ -33,14 +35,14 @@ export default function ChangePasswordScreen() {
       await change.mutateAsync({ currentPassword: current || undefined, newPassword: next });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
-      if (Platform.OS !== 'web') Alert.alert('Password updated', 'Use your new password next time you sign in.');
+      if (Platform.OS !== 'web') Alert.alert(t('password.updated'), t('password.updatedBody'));
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 401
-          ? 'Your current password isn’t right.'
+          ? t('password.wrongCurrent')
           : e instanceof Error
             ? e.message
-            : 'Could not change the password.',
+            : t('password.couldNotChange'),
       );
     }
   };
@@ -51,16 +53,16 @@ export default function ChangePasswordScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: Spacing.four, gap: Spacing.three }}>
         <TextField
-          label="Current password"
+          label={t('password.current')}
           value={current}
           onChangeText={setCurrent}
           secureTextEntry
           autoComplete="current-password"
-          placeholder="Leave empty if you signed in with Google"
+          placeholder={t('password.currentPlaceholder')}
           autoFocus
         />
         <TextField
-          label="New password"
+          label={t('password.new')}
           value={next}
           onChangeText={setNext}
           secureTextEntry
@@ -72,7 +74,7 @@ export default function ChangePasswordScreen() {
           At least {MIN_PASSWORD} characters
         </ThemedText>
         <TextField
-          label="Repeat new password"
+          label={t('password.repeat')}
           value={confirm}
           onChangeText={setConfirm}
           secureTextEntry
@@ -82,7 +84,7 @@ export default function ChangePasswordScreen() {
         />
         {mismatch && (
           <ThemedText type="caption" themeColor="danger">
-            The two passwords don’t match.
+            {t('password.mismatch')}
           </ThemedText>
         )}
         {error && (
@@ -99,7 +101,7 @@ export default function ChangePasswordScreen() {
           borderColor: theme.border,
           backgroundColor: theme.backgroundElement,
         }}>
-        <Button title="Update password" onPress={submit} loading={change.isPending} disabled={!valid} />
+        <Button title={t('password.update')} onPress={submit} loading={change.isPending} disabled={!valid} />
       </View>
     </KeyboardAvoidingView>
   );

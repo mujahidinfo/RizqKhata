@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import type { BusinessType } from '@/api/types';
 import { AuthScreen } from '@/components/auth-screen';
+import { BusinessTypePicker } from '@/components/business-type-picker';
 import { Button } from '@/components/button';
 import { HeaderButton } from '@/components/header-button';
 import { TextField } from '@/components/text-field';
@@ -9,6 +11,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useCurrentUser, useSession } from '@/lib/session';
+import { useLanguage, useT } from '@/lib/i18n';
 
 const CURRENCIES = [
   { code: 'BDT', label: '৳ BDT' },
@@ -22,9 +25,12 @@ export default function OnboardingScreen() {
   const theme = useTheme();
   const user = useCurrentUser();
   const { createBusiness, signOut } = useSession();
+  const t = useT();
+  const language = useLanguage();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [currency, setCurrency] = useState('BDT');
+  const [businessType, setBusinessType] = useState<BusinessType>('RETAIL');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,42 +39,52 @@ export default function OnboardingScreen() {
     setSubmitting(true);
     setError(null);
     try {
-      await createBusiness({ name: name.trim(), phone: phone.trim() || undefined, currency });
+      // The shop starts in the language they set up the app in.
+      await createBusiness({
+        name: name.trim(),
+        phone: phone.trim() || undefined,
+        currency,
+        language,
+        businessType,
+        // Release 1 has one template; a repair shop starts with its price list.
+        ...(businessType !== 'RETAIL' && { serviceTemplate: 'mobile_repair' as const }),
+      });
       // The guard opens the app on the Sell tab.
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not create your shop.');
+      setError(e instanceof Error ? e.message : t('onboarding.couldNotCreate'));
       setSubmitting(false);
     }
   };
 
   return (
     <AuthScreen
-      title={`Welcome, ${user.name.split(' ')[0]}`}
-      subtitle="Set up your shop — you can change this later."
+      title={t('onboarding.welcome', { name: user.name.split(' ')[0] })}
+      subtitle={t('onboarding.subtitle')}
       footer={
         <View style={styles.footer}>
-          <HeaderButton title="Use a different account" onPress={signOut} />
+          <HeaderButton title={t('onboarding.otherAccount')} onPress={signOut} />
         </View>
       }>
       <TextField
-        label="Shop name"
+        label={t('onboarding.shopName')}
         value={name}
         onChangeText={setName}
-        placeholder="e.g. Rahim Store"
+        placeholder={t('onboarding.shopNamePlaceholder')}
         autoCapitalize="words"
         autoFocus
         returnKeyType="next"
       />
       <TextField
-        label="Shop phone (optional)"
+        label={t('onboarding.shopPhone')}
         value={phone}
         onChangeText={setPhone}
         keyboardType="phone-pad"
-        placeholder="Printed on receipts"
+        placeholder={t('onboarding.phonePlaceholder')}
       />
+      <BusinessTypePicker value={businessType} onChange={setBusinessType} />
       <View style={styles.currency}>
         <ThemedText type="small" themeColor="textSecondary">
-          Currency
+          {t('onboarding.currency')}
         </ThemedText>
         <View style={styles.options}>
           {CURRENCIES.map((c) => {
@@ -99,7 +115,7 @@ export default function OnboardingScreen() {
           {error}
         </ThemedText>
       )}
-      <Button title="Start selling" onPress={onSubmit} loading={submitting} disabled={!name.trim()} />
+      <Button title={t('onboarding.start')} onPress={onSubmit} loading={submitting} disabled={!name.trim()} />
     </AuthScreen>
   );
 }

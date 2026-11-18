@@ -1,5 +1,6 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
+import { SERVICE_TEMPLATE_KEYS } from './service-templates.js';
 
 const currency = z
   .string()
@@ -7,6 +8,8 @@ const currency = z
   .length(3)
   .transform((c) => c.toUpperCase());
 const language = z.enum(['en', 'bn']);
+const businessType = z.enum(['RETAIL', 'SERVICE', 'HYBRID']);
+const serviceTemplate = z.enum(SERVICE_TEMPLATE_KEYS);
 
 /** Onboarding: one form creates the business and its first branch. */
 export class CreateBusinessDto extends createZodDto(
@@ -16,6 +19,9 @@ export class CreateBusinessDto extends createZodDto(
     address: z.string().trim().max(200).optional(),
     currency: currency.default('BDT'),
     language: language.default('bn'),
+    // Sells products, provides services, or both; a template seeds starter services.
+    businessType: businessType.default('RETAIL'),
+    serviceTemplate: serviceTemplate.optional(),
   }),
 ) {}
 
@@ -41,6 +47,8 @@ export class UpdateShopDto extends createZodDto(
     businessName: z.string().trim().min(1).max(100).optional(),
     currency: currency.optional(),
     language: language.optional(),
+    businessType: businessType.optional(),
+    serviceTemplate: serviceTemplate.optional(),
   }),
 ) {}
 

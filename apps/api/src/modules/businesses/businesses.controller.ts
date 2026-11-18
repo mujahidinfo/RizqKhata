@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   CurrentUser,
@@ -51,6 +51,13 @@ export class ShopsController {
   @Post()
   add(@Tenant() tenant: TenantContext, @Body() body: CreateShopDto) {
     return this.businesses.addShop(tenant, body);
+  }
+
+  /** Close a branch (soft); its records stay. */
+  @Roles('OWNER')
+  @Delete(':id')
+  remove(@Tenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.businesses.deleteShop(tenant, id);
   }
 }
 

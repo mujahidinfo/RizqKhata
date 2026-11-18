@@ -81,7 +81,7 @@ const PAYMENT_LABEL_KEYS: Record<PaymentMethod, TranslationKey> = {
 };
 
 const PRESET_COLORS = [
-  "#6366f1", "#f59e0b", "#10b981", "#ef4444",
+  "#17694C", "#f59e0b", "#6366f1", "#ef4444",
   "#8b5cf6", "#06b6d4", "#f97316", "#ec4899", "#84cc16", "#64748b",
 ];
 
@@ -292,7 +292,7 @@ export function ExpensesView() {
               <Receipt className="h-10 w-10 mb-3 opacity-30" />
               <p className="text-sm font-medium">{t("finance.noExpensesFound")}</p>
               {hasFilters && (
-                <button onClick={clearFilters} className="mt-2 text-xs text-indigo-500 hover:underline">
+                <button onClick={clearFilters} className="mt-2 text-xs text-brand-500 hover:underline">
                   {t("finance.clearFilters")}
                 </button>
               )}
@@ -321,7 +321,7 @@ export function ExpensesView() {
                             <p className="text-xs text-slate-400">{expense.employee.name}</p>
                           )}
                           {expense.isRecurring && (
-                            <span className="text-[10px] text-indigo-500 font-medium">{t("finance.recurring")}</span>
+                            <span className="text-[10px] text-brand-500 font-medium">{t("finance.recurring")}</span>
                           )}
                         </div>
                       </TableCell>
@@ -567,7 +567,7 @@ function CategoryDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
   const { data: categories } = trpc.finance.expenseCategories.list.useQuery();
 
   const createCat = trpc.finance.expenseCategories.create.useMutation({
-    onSuccess: () => { utils.finance.expenseCategories.list.invalidate(); catForm.reset({ name: "", color: "#6366f1" }); toast({ title: t("finance.categoryCreated") }); },
+    onSuccess: () => { utils.finance.expenseCategories.list.invalidate(); catForm.reset({ name: "", color: "#17694C" }); toast({ title: t("finance.categoryCreated") }); },
     onError: (e) => toast({ title: e.message, variant: "destructive" }),
   });
 
@@ -576,7 +576,7 @@ function CategoryDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (
     onError: (e) => toast({ title: e.message, variant: "destructive" }),
   });
 
-  const catForm = useForm<CategoryForm>({ defaultValues: { name: "", color: "#6366f1" } });
+  const catForm = useForm<CategoryForm>({ defaultValues: { name: "", color: "#17694C" } });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

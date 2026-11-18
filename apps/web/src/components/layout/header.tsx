@@ -37,7 +37,7 @@ export function Header({ user }: HeaderProps) {
       <button
         onClick={toggle}
         title={mode === "focused" ? t("header.switchToFullWidth") : t("header.switchToCentered")}
-        className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+        className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
       >
         {mode === "focused" ? (
           <Maximize2 className="h-4 w-4" />
@@ -52,8 +52,8 @@ export function Header({ user }: HeaderProps) {
       {/* User menu */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center gap-2 h-9 px-2.5 rounded-xl hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
-            <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center shrink-0">
+          <button className="flex items-center gap-2 h-9 px-2.5 rounded-xl hover:bg-slate-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
+            <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center shrink-0">
               <span className="text-xs font-bold text-white select-none">{initials}</span>
             </div>
             <span className="hidden sm:block text-sm font-medium text-slate-700">{user.name}</span>

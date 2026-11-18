@@ -63,7 +63,13 @@ export type Shop = {
   address: string | null;
   phone: string | null;
   email: string | null;
+  /** What the business does; decides tabs and modules. */
+  businessType: BusinessType;
+  serviceTemplate: string | null;
 };
+
+export type BusinessType = 'RETAIL' | 'SERVICE' | 'HYBRID';
+export type ProductKind = 'PRODUCT' | 'SERVICE';
 
 export type Category = {
   id: string;
@@ -94,6 +100,9 @@ export type Product = {
   costPrice: number;
   imageUrl: string | null;
   isActive: boolean;
+  /** Services are sold but never stocked. */
+  kind: ProductKind;
+  warrantyDays: number | null;
   category: Category | null;
   variants: ProductVariant[];
 };
@@ -119,6 +128,125 @@ export type Customer = {
   email: string | null;
 };
 
+/** GET /customers — with what they've spent across all branches. */
+export type CustomerSummary = Customer & {
+  address: string | null;
+  createdAt: string;
+  totalSpent: number;
+  lastOrderAt: string | null;
+  _count: { orders: number };
+};
+
+/** GET /customers/:id — buying stats and their latest orders (all branches). */
+export type CustomerDetail = Customer & {
+  address: string | null;
+  createdAt: string;
+  stats: {
+    orderCount: number;
+    totalSpent: number;
+    averageOrder: number;
+    firstOrderAt: string | null;
+    lastOrderAt: string | null;
+  };
+  orders: (Omit<Order, 'customer' | 'cashier' | 'refunds'> & { shop: { id: string; name: string } })[];
+  jobs: {
+    id: string;
+    jobNumber: string;
+    device: string;
+    problem: string;
+    status: JobStatus;
+    createdAt: string;
+    shop: { id: string; name: string };
+  }[];
+};
+
+// ─── Service jobs ────────────────────────────────────────────────────────────
+
+export type JobStatus =
+  | 'RECEIVED'
+  | 'DIAGNOSING'
+  | 'WAITING_APPROVAL'
+  | 'WAITING_PARTS'
+  | 'IN_REPAIR'
+  | 'READY'
+  | 'DELIVERED'
+  | 'CANCELLED';
+
+/** Intake fields of the mobile-repair template (all optional). */
+export type JobDetails = {
+  brand?: string;
+  model?: string;
+  imei?: string;
+  lockCode?: string;
+  accessories?: string;
+  condition?: string;
+};
+
+export type JobLine = {
+  id?: string;
+  productId: string;
+  variantId?: string | null;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export type Job = {
+  id: string;
+  jobNumber: string;
+  device: string;
+  details: JobDetails;
+  problem: string;
+  status: JobStatus;
+  estimate: number | null;
+  advance: number;
+  advanceMethod: PaymentMethod | null;
+  promisedAt: string | null;
+  warrantyDays: number | null;
+  deliveredAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  customer: { id: string; name: string; phone: string | null };
+  lines: JobLine[];
+};
+
+export type JobEvent = {
+  id: string;
+  type: 'CREATED' | 'STATUS' | 'NOTE';
+  status: JobStatus | null;
+  note: string | null;
+  createdAt: string;
+  createdBy: { id: string; name: string };
+};
+
+export type JobDetail = Job & {
+  createdBy: { id: string; name: string };
+  events: JobEvent[];
+  order: { id: string; orderNumber: string; total: number; depositApplied: number; createdAt: string } | null;
+};
+
+export type JobsSummary = {
+  counts: Partial<Record<JobStatus, number>>;
+  active: number;
+  ready: number;
+  overdue: number;
+  deliveredToday: number;
+  advancesHeld: number;
+};
+
+/** A note for later; private to its author unless shared with the business. */
+export type Note = {
+  id: string;
+  title: string;
+  body: string;
+  pinned: boolean;
+  done: boolean;
+  shared: boolean;
+  createdAt: string;
+  updatedAt: string;
+  author: { id: string; name: string };
+};
+
 export type OrderItem = {
   id: string;
   name: string;
@@ -139,6 +267,8 @@ export type Refund = {
 export type Order = {
   id: string;
   orderNumber: string;
+  /** Advance paid earlier on a service job, deducted from what was due. */
+  depositApplied?: number;
   status: OrderStatus;
   type: 'WALK_IN' | 'ONLINE';
   subtotal: number;
@@ -344,6 +474,7 @@ export type ReorderSuggestion = {
   productId: string;
   variantId: string;
   name: string;
+  imageUrl: string | null;
   stock: number;
   lowStock: number;
   suggestedQuantity: number;

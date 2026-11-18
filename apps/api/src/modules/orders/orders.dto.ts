@@ -4,6 +4,7 @@ import {
   isoDate,
   paginationQuery,
   paymentMethodSchema,
+  recordedAtSchema,
 } from '../../common/utils.js';
 
 const orderStatusSchema = z.enum([
@@ -26,6 +27,11 @@ export class ListOrdersQueryDto extends createZodDto(
 export class CreateOrderDto extends createZodDto(
   z.object({
     customerId: z.string().optional(),
+    // Alternative to customerId: found by phone (or created) in the same
+    // transaction, so an offline sale needs no separate customer call.
+    customer: z
+      .object({ phone: z.string().trim().min(1), name: z.string().trim().min(1) })
+      .optional(),
     type: z.enum(['WALK_IN', 'ONLINE']).default('WALK_IN'),
     items: z
       .array(
@@ -53,6 +59,11 @@ export class CreateOrderDto extends createZodDto(
     // FULFILLED. Callers that genuinely need a queue (e.g. online orders
     // awaiting delivery) can still pass PENDING.
     status: z.enum(['PENDING', 'PROCESSING', 'FULFILLED']).default('FULFILLED'),
+    // When the sale happened (sales rung up offline and synced later).
+    recordedAt: recordedAtSchema,
+    // Rung up offline: the goods already left the counter, so the sale is
+    // always recorded, even if it takes stock below zero (flags a recount).
+    recordedOffline: z.boolean().default(false),
   }),
 ) {}
 

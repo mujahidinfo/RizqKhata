@@ -15,6 +15,8 @@ export class ListProductsQueryDto extends createZodDto(
     search: z.string().optional(),
     categoryId: z.string().optional(),
     lowStock: z.stringbool().optional(),
+    /** Only goods or only services; omit for both. */
+    kind: z.enum(['PRODUCT', 'SERVICE']).optional(),
   }),
 ) {}
 
@@ -37,6 +39,9 @@ export class CreateProductDto extends createZodDto(
     costPrice: z.number().min(0).default(0),
     categoryId: z.string().optional(),
     imageUrl: z.string().optional(),
+    // Services never hold stock (the stock fields below are ignored for them).
+    kind: z.enum(['PRODUCT', 'SERVICE']).default('PRODUCT'),
+    warrantyDays: z.number().int().min(0).max(3650).optional(),
     // Simple products (no variants): starting stock in the active branch.
     stock: z.number().int().default(0),
     lowStock: z.number().int().min(0).default(5),
@@ -55,6 +60,8 @@ export class UpdateProductDto extends createZodDto(
     categoryId: z.string().optional(),
     imageUrl: z.string().optional(),
     isActive: z.boolean().optional(),
+    kind: z.enum(['PRODUCT', 'SERVICE']).optional(),
+    warrantyDays: z.number().int().min(0).max(3650).nullable().optional(),
   }),
 ) {}
 

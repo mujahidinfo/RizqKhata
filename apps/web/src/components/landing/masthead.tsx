@@ -22,7 +22,7 @@ export function Masthead() {
                 জেনপস
               </span>
               <span className="mt-1 block font-[family-name:var(--font-gothic)] text-[0.68rem] font-600 uppercase tracking-[0.22em] text-[var(--ink-soft)]">
-                GenPOS
+                Rizq Khata
               </span>
             </Link>
           </div>

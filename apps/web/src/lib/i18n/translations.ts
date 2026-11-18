@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Central translation dictionary for GenPOS.
+// Central translation dictionary for Rizq Khata.
 //
 // This is the single source of truth for every user-facing string in the
 // dashboard. Add a key under `en` and its `bn` (Bangla) counterpart, then use it
@@ -79,7 +79,7 @@ const en = {
 
   // ─── Sidebar navigation ──────────────────────────────────────────────────────
   nav: {
-    appName: "GenPOS",
+    appName: "Rizq Khata",
     tagline: "Point of Sale",
     dashboard: "Dashboard",
     sales: "Sales / POS",
@@ -294,7 +294,7 @@ const en = {
 
   // ─── Install / PWA ─────────────────────────────────────────────────────────────
   pwa: {
-    installTitle: "Install GenPOS",
+    installTitle: "Install Rizq Khata",
     installSubtitle: "Add it to your home screen — full screen, one tap, no browser bars.",
     install: "Install app",
     notNow: "Not now",
@@ -308,7 +308,7 @@ const en = {
     iosNote: "Add to Home Screen is only available in Safari on iOS.",
     iosStep1: "Tap the Share button at the bottom of Safari",
     iosStep2: "Scroll down and tap “Add to Home Screen”",
-    iosStep3: "Tap “Add” — GenPOS appears on your home screen",
+    iosStep3: "Tap “Add” — Rizq Khata appears on your home screen",
     androidTitle: "Install on Android",
     androidStep1: "Tap the ⋮ menu in Chrome",
     androidStep2: "Tap “Install app” or “Add to Home screen”",
@@ -756,7 +756,7 @@ const en = {
     heroTitleLead: "Run your shop with clarity,",
     heroTitleHighlight: "not chaos.",
     heroSubtitle:
-      "GenPOS brings sales, inventory, customers, and finance into one clean dashboard — so you always know what's selling, what's running low, and what you're really earning.",
+      "Rizq Khata brings sales, inventory, customers, and finance into one clean dashboard — so you always know what's selling, what's running low, and what you're really earning.",
     heroCtaPrimary: "Get Started Free",
     heroCtaDemo: "See live demo",
     heroTrust: "No credit card required · Set up in minutes · Works on any device",
@@ -804,7 +804,7 @@ const en = {
     featuresEyebrow: "The solution",
     featuresTitle: "One system for your entire shop",
     featuresSubtitle:
-      "GenPOS brings every part of running a shop — selling, stocking, and tracking — into a single, easy-to-use dashboard.",
+      "Rizq Khata brings every part of running a shop — selling, stocking, and tracking — into a single, easy-to-use dashboard.",
     feature1Title: "Fast, simple checkout",
     feature1Desc: "Ring up sales in seconds and accept cash, card, mobile money, or bank transfer — all from one screen.",
     feature2Title: "Inventory that updates itself",
@@ -851,23 +851,23 @@ const en = {
     // FAQ
     faqEyebrow: "FAQ",
     faqTitle: "Frequently asked questions",
-    faq1Q: "Do I need any technical experience to use GenPOS?",
-    faq1A: "No. GenPOS is designed to be intuitive from day one — if your team can use a smartphone, they can use GenPOS.",
+    faq1Q: "Do I need any technical experience to use Rizq Khata?",
+    faq1A: "No. Rizq Khata is designed to be intuitive from day one — if your team can use a smartphone, they can use Rizq Khata.",
     faq2Q: "Can my whole team use it at the same time?",
-    faq2A: "Yes. GenPOS supports role-based accounts for admins, cashiers, and inventory managers, so everyone sees exactly what they need and nothing they don't.",
-    faq3Q: "Does GenPOS handle both in-store and online orders?",
+    faq2A: "Yes. Rizq Khata supports role-based accounts for admins, cashiers, and inventory managers, so everyone sees exactly what they need and nothing they don't.",
+    faq3Q: "Does Rizq Khata handle both in-store and online orders?",
     faq3A: "Yes. Every order — walk-in or online — is tracked in one place, from purchase through fulfillment, cancellation, or refund.",
     faq4Q: "Can I track more than just sales?",
-    faq4A: "Absolutely. GenPOS includes finance tools for expenses, employee salaries, and budgets, plus reports like income statements and expense breakdowns.",
+    faq4A: "Absolutely. Rizq Khata includes finance tools for expenses, employee salaries, and budgets, plus reports like income statements and expense breakdowns.",
     faq5Q: "What payment methods are supported?",
     faq5A: "Cash, card, mobile money, and bank transfer are all supported out of the box.",
 
     // Final CTA + footer
     ctaTitle: "Ready to bring order to your shop?",
-    ctaSubtitle: "Set up GenPOS today and start selling, tracking, and growing — all from one dashboard.",
+    ctaSubtitle: "Set up Rizq Khata today and start selling, tracking, and growing — all from one dashboard.",
     ctaDemo: "See live demo",
     footerTagline: "Point of Sale for modern shops",
-    footerRights: "© {year} GenPOS. All rights reserved.",
+    footerRights: "© {year} Rizq Khata. All rights reserved.",
 
     // Redesign additions
     heroCtaSecondary: "See how it works",
@@ -1201,7 +1201,7 @@ const bn: Widen<typeof en> = {
   },
 
   pwa: {
-    installTitle: "GenPOS ইনস্টল করুন",
+    installTitle: "Rizq Khata ইনস্টল করুন",
     installSubtitle: "হোম স্ক্রিনে যোগ করুন — ফুল স্ক্রিন, এক ট্যাপে, ব্রাউজার বার ছাড়াই।",
     install: "অ্যাপ ইনস্টল করুন",
     notNow: "এখন নয়",
@@ -1215,7 +1215,7 @@ const bn: Widen<typeof en> = {
     iosNote: "“Add to Home Screen” শুধু iOS-এর সাফারিতে কাজ করে।",
     iosStep1: "সাফারির নিচে শেয়ার বাটনে ট্যাপ করুন",
     iosStep2: "নিচে স্ক্রল করে “Add to Home Screen” ট্যাপ করুন",
-    iosStep3: "“Add” ট্যাপ করুন — GenPOS হোম স্ক্রিনে যোগ হবে",
+    iosStep3: "“Add” ট্যাপ করুন — Rizq Khata হোম স্ক্রিনে যোগ হবে",
     androidTitle: "অ্যান্ড্রয়েডে ইনস্টল করুন",
     androidStep1: "ক্রোমের ⋮ মেনুতে ট্যাপ করুন",
     androidStep2: "“Install app” বা “Add to Home screen” ট্যাপ করুন",

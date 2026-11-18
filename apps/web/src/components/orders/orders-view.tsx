@@ -429,7 +429,7 @@ export function OrdersView() {
             placeholder={t("orders.searchPlaceholder")}
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
+            className="w-full h-11 pl-10 pr-10 bg-white border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent shadow-sm"
           />
           {search && (
             <button
@@ -489,7 +489,7 @@ export function OrdersView() {
                 className={cn(
                   "h-8 px-3 rounded-full text-xs font-semibold transition-all whitespace-nowrap",
                   datePreset === days
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "bg-brand-600 text-white shadow-sm"
                     : "bg-white border border-slate-200 text-slate-500 hover:border-slate-300"
                 )}
               >
@@ -516,7 +516,7 @@ export function OrdersView() {
             )}
           </p>
           {isFetching && !isLoading && (
-            <span className="h-4 w-4 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin" />
+            <span className="h-4 w-4 rounded-full border-2 border-brand-200 border-t-brand-600 animate-spin" />
           )}
         </div>
 
@@ -543,7 +543,7 @@ export function OrdersView() {
               {(search || statusFilter !== "all") && (
                 <button
                   onClick={() => { handleSearchChange(""); handleStatusChange("all"); }}
-                  className="text-xs text-indigo-600 mt-2 hover:underline font-semibold"
+                  className="text-xs text-brand-600 mt-2 hover:underline font-semibold"
                 >
                   {t("orders.clearFilters")}
                 </button>
@@ -575,7 +575,7 @@ export function OrdersView() {
                         onClick={() => setSelectedOrder(order)}
                         className={cn(
                           "cursor-pointer transition-colors hover:bg-slate-50/70 group",
-                          syncedSelected?.id === order.id && "bg-indigo-50/60"
+                          syncedSelected?.id === order.id && "bg-brand-50/60"
                         )}
                       >
                         <td className="px-5 py-3.5 font-mono text-xs font-semibold text-slate-700 whitespace-nowrap">
@@ -626,7 +626,7 @@ export function OrdersView() {
                       onClick={() => setSelectedOrder(order)}
                       className={cn(
                         "w-full text-left px-4 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors",
-                        syncedSelected?.id === order.id && "bg-indigo-50/60"
+                        syncedSelected?.id === order.id && "bg-brand-50/60"
                       )}
                     >
                       {/* Status dot */}

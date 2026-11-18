@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Server-side client for the GenPOS REST API (apps/api).
+ * Server-side client for the Rizq Khata REST API (apps/api).
  *
  * The browser never sees API tokens: they live in httpOnly cookies, and every
  * call goes through Next (tRPC procedures, server components or `proxy.ts`).
@@ -76,7 +76,7 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new ApiError(503, "Can't reach the GenPOS server. Try again in a moment.");
+    throw new ApiError(503, "Can't reach the Rizq Khata server. Try again in a moment.");
   }
 
   const text = await res.text();

@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 
 /**
- * Base URL of the GenPOS API (apps/api).
+ * Base URL of the Rizq Khata API (apps/api).
  *
  * Set EXPO_PUBLIC_API_URL for real deployments. In development we fall back to the
  * machine running Metro (from `hostUri`), so a phone on the same Wi-Fi or an

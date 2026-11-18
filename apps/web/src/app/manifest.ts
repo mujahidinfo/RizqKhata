@@ -6,7 +6,7 @@ import type { MetadataRoute } from "next";
  * chrome; without `start_url` + `display` Chrome will not offer to install.
  */
 export default function manifest(): MetadataRoute.Manifest {
-  const name = process.env.NEXT_PUBLIC_APP_NAME ?? "GenPOS";
+  const name = process.env.NEXT_PUBLIC_APP_NAME ?? "Rizq Khata";
 
   return {
     name: `${name} – Point of Sale`,
@@ -19,7 +19,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "any",
     background_color: "#ffffff",
-    theme_color: "#4f46e5",
+    theme_color: "#17694C",
     lang: "en",
     dir: "ltr",
     categories: ["business", "finance", "productivity", "shopping"],

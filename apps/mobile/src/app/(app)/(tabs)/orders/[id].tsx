@@ -2,7 +2,6 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useOrder } from '@/api/queries';
-import type { PaymentMethod } from '@/api/types';
 import { OrderStatusBadge } from '@/components/badge';
 import { Card, DetailRow } from '@/components/card';
 import { QueryState } from '@/components/query-state';
@@ -10,17 +9,12 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDateTime, useFormatCurrency } from '@/lib/format';
-
-const PAYMENT_LABEL: Record<PaymentMethod, string> = {
-  CASH: 'Cash',
-  CARD: 'Card',
-  MOBILE_MONEY: 'Mobile money',
-  BANK_TRANSFER: 'Bank transfer',
-};
+import { useT } from '@/lib/i18n';
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const theme = useTheme();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
   const { data: order, isLoading, error, refetch, isRefetching } = useOrder(id);
 
@@ -45,12 +39,12 @@ export default function OrderDetailScreen() {
           </ThemedText>
           <OrderStatusBadge status={order.status} />
           <ThemedText type="small" themeColor="textSecondary">
-            {formatDateTime(order.createdAt)}
-            {order.cashier ? ` · by ${order.cashier.name}` : ''}
+            {formatDateTime(order.createdAt, t)}
+            {order.cashier ? t('orders.by', { name: order.cashier.name }) : ''}
           </ThemedText>
         </View>
 
-        <Card title="Items">
+        <Card title={t('orders.items')}>
           {order.items.map((item) => (
             <View key={item.id} style={styles.item}>
               <View style={styles.itemMain}>
@@ -67,32 +61,35 @@ export default function OrderDetailScreen() {
           ))}
         </Card>
 
-        <Card title="Summary">
-          <DetailRow label="Subtotal" value={formatCurrency(order.subtotal)} />
+        <Card title={t('orders.summary')}>
+          <DetailRow label={t('checkout.subtotal')} value={formatCurrency(order.subtotal)} />
           {order.discountAmt > 0 && (
-            <DetailRow label="Discount" value={`−${formatCurrency(order.discountAmt)}`} />
+            <DetailRow label={t('checkout.discount')} value={`−${formatCurrency(order.discountAmt)}`} />
           )}
           {order.taxAmt > 0 && (
-            <DetailRow label={`Tax (${order.taxRate}%)`} value={formatCurrency(order.taxAmt)} />
+            <DetailRow label={t('orders.taxRate', { rate: order.taxRate })} value={formatCurrency(order.taxAmt)} />
           )}
-          <DetailRow label="Total" value={formatCurrency(order.total)} emphasis />
-          {refunded > 0 && <DetailRow label="Refunded" value={`−${formatCurrency(refunded)}`} />}
+          <DetailRow label={t('common.total')} value={formatCurrency(order.total)} emphasis />
+          {(order.depositApplied ?? 0) > 0 && (
+            <DetailRow label={t('jobs.advanceLess')} value={`−${formatCurrency(order.depositApplied ?? 0)}`} />
+          )}
+          {refunded > 0 && <DetailRow label={t('orders.refunded')} value={`−${formatCurrency(refunded)}`} />}
         </Card>
 
-        <Card title="Details">
-          <DetailRow label="Payment" value={PAYMENT_LABEL[order.paymentMethod]} />
-          <DetailRow label="Type" value={order.type === 'WALK_IN' ? 'Walk-in' : 'Online'} />
-          <DetailRow label="Customer" value={order.customer?.name ?? 'Walk-in customer'} />
-          {order.customer?.phone && <DetailRow label="Phone" value={order.customer.phone} />}
-          {order.note && <DetailRow label="Note" value={order.note} />}
+        <Card title={t('orders.details')}>
+          <DetailRow label={t('orders.payment')} value={t(`common.paymentMethods.${order.paymentMethod}`)} />
+          <DetailRow label={t('orders.type')} value={order.type === 'WALK_IN' ? t('orders.walkIn') : t('orders.online')} />
+          <DetailRow label={t('orders.customer')} value={order.customer?.name ?? t('orders.walkInCustomer')} />
+          {order.customer?.phone && <DetailRow label={t('checkout.phone')} value={order.customer.phone} />}
+          {order.note && <DetailRow label={t('orders.note')} value={order.note} />}
         </Card>
 
         {order.refunds.length > 0 && (
-          <Card title="Refunds">
+          <Card title={t('orders.refunds')}>
             {order.refunds.map((r) => (
               <DetailRow
                 key={r.id}
-                label={[formatDateTime(r.createdAt), r.reason].filter(Boolean).join(' · ')}
+                label={[formatDateTime(r.createdAt, t), r.reason].filter(Boolean).join(' · ')}
                 value={formatCurrency(r.amount)}
               />
             ))}

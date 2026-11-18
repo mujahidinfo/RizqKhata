@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { CartLine } from '@/lib/cart';
+import { useT } from '@/lib/i18n';
 
 /** One cart line: what it is, unit price, quantity stepper, line total. */
 export function CartRow({
@@ -21,6 +22,7 @@ export function CartRow({
   onChangeQuantity: (quantity: number) => void;
 }) {
   const theme = useTheme();
+  const t = useT();
 
   const step = (delta: number) => {
     void Haptics.selectionAsync();
@@ -47,15 +49,15 @@ export function CartRow({
         </ThemedText>
         <View style={[styles.stepper, { borderColor: theme.border }]}>
           <StepButton
-            label={line.quantity === 1 ? 'Remove' : 'Decrease'}
+            label={line.quantity === 1 ? t('common.remove') : t('sellParts.decrease')}
             symbol={line.quantity === 1 ? '×' : '−'}
             danger={line.quantity === 1}
             onPress={() => step(-1)}
           />
-          <ThemedText type="smallBold" style={styles.qty} accessibilityLabel={`Quantity ${line.quantity}`}>
+          <ThemedText type="smallBold" style={styles.qty} accessibilityLabel={t('sellParts.quantityA11y', { count: line.quantity })}>
             {line.quantity}
           </ThemedText>
-          <StepButton label="Increase" symbol="+" onPress={() => step(1)} />
+          <StepButton label={t('sellParts.increase')} symbol="+" onPress={() => step(1)} />
         </View>
       </View>
     </View>

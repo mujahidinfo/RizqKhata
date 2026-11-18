@@ -11,6 +11,7 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 /** Add (`/supplier-form`) or edit (`/supplier-form?id=…`) a supplier. */
 export default function SupplierFormScreen() {
@@ -24,6 +25,7 @@ export default function SupplierFormScreen() {
 
 function SupplierForm({ supplier }: { supplier?: Supplier }) {
   const theme = useTheme();
+  const t = useT();
   const save = useSaveSupplier();
   const [name, setName] = useState(supplier?.name ?? '');
   const [phone, setPhone] = useState(supplier?.phone ?? '');
@@ -46,7 +48,7 @@ function SupplierForm({ supplier }: { supplier?: Supplier }) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the supplier.');
+      setError(e instanceof Error ? e.message : t('supplierForm.couldNotSave'));
     }
   };
 
@@ -56,27 +58,27 @@ function SupplierForm({ supplier }: { supplier?: Supplier }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <TextField
-          label="Supplier name"
+          label={t('supplierForm.name')}
           value={name}
           onChangeText={setName}
-          placeholder="e.g. Karim Traders"
+          placeholder={t('supplierForm.namePlaceholder')}
           autoCapitalize="words"
           autoFocus={!supplier}
         />
-        <TextField label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+        <TextField label={t('supplierForm.phone')} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
         <TextField
-          label="Email (optional)"
+          label={t('supplierForm.email')}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
         />
-        <TextField label="Address (optional)" value={address} onChangeText={setAddress} />
+        <TextField label={t('supplierForm.address')} value={address} onChangeText={setAddress} />
         <TextField
-          label="Notes (optional)"
+          label={t('supplierForm.notes')}
           value={notes}
           onChangeText={setNotes}
-          placeholder="e.g. delivers on Sundays"
+          placeholder={t('supplierForm.notesPlaceholder')}
           multiline
         />
         {error && (
@@ -85,7 +87,7 @@ function SupplierForm({ supplier }: { supplier?: Supplier }) {
           </ThemedText>
         )}
         <Button
-          title={supplier ? 'Save' : 'Add supplier'}
+          title={supplier ? t('common.save') : t('supplierForm.add')}
           onPress={submit}
           loading={save.isPending}
           disabled={!name.trim()}

@@ -45,7 +45,7 @@ export function Colophon() {
           <div>
             <p className="font-[family-name:var(--font-bengali)] text-[1.35rem] leading-none">জেনপস</p>
             <p className="mt-1.5 font-[family-name:var(--font-gothic)] text-[0.66rem] font-600 uppercase tracking-[0.2em] text-[var(--ink-soft)]">
-              GenPOS · {t("landing.rsMasthead")}
+              Rizq Khata · {t("landing.rsMasthead")}
             </p>
           </div>
 

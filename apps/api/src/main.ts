@@ -23,7 +23,7 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(
       app,
       new DocumentBuilder()
-        .setTitle('GenPOS API')
+        .setTitle('Rizq Khata API')
         .setVersion('1.0')
         .addBearerAuth()
         .build(),

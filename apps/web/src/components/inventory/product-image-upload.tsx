@@ -131,20 +131,20 @@ export function ProductImageUpload({ value, onChange }: {
           className={cn(
             "w-full rounded-xl border-2 border-dashed px-4 py-7 flex flex-col items-center justify-center gap-2 transition-colors",
             dragging
-              ? "border-indigo-400 bg-indigo-50"
-              : "border-slate-200 bg-slate-50/60 hover:border-indigo-300 hover:bg-indigo-50/40",
+              ? "border-brand-400 bg-brand-50"
+              : "border-slate-200 bg-slate-50/60 hover:border-brand-300 hover:bg-brand-50/40",
             isUploading && "cursor-wait",
           )}
         >
           {isUploading ? (
             <>
-              <Loader2 className="h-5 w-5 text-indigo-500 animate-spin" />
+              <Loader2 className="h-5 w-5 text-brand-500 animate-spin" />
               <p className="text-xs font-semibold text-slate-600">
                 {t("inventory.uploading", { percent: Math.round(progress) })}
               </p>
               <div className="w-40 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-indigo-500 transition-[width] duration-200"
+                  className="h-full bg-brand-500 transition-[width] duration-200"
                   style={{ width: `${progress}%` }}
                 />
               </div>

@@ -5,7 +5,11 @@ import {
 } from '@nestjs/common';
 import type { PaymentMethod, Prisma } from '@genpos/db';
 import type { TenantContext } from '../../common/types.js';
-import { generatePurchaseNumber, round2 } from '../../common/utils.js';
+import {
+  generatePurchaseNumber,
+  recordedAtOrNow,
+  round2,
+} from '../../common/utils.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import {
   ensureExpenseCategory,
@@ -92,9 +96,15 @@ export class SuppliersService {
     input: CreateSupplierPaymentDto,
   ) {
     const supplier = await this.assertSupplier(tenant, supplierId);
+    const { recordedAt, ...fields } = input;
     await this.prisma.$transaction(async (tx) => {
       const payment = await tx.supplierPayment.create({
-        data: { ...input, supplierId, businessId: tenant.businessId },
+        data: {
+          ...fields,
+          supplierId,
+          businessId: tenant.businessId,
+          createdAt: recordedAtOrNow(recordedAt),
+        },
       });
       await this.recordAsExpense(tx, tenant, payment, supplier.name);
     });
@@ -185,6 +195,7 @@ export class SuppliersService {
       );
     }
     const purchaseNumber = generatePurchaseNumber();
+    const createdAt = recordedAtOrNow(input.recordedAt);
     const purchase = await this.prisma.$transaction(async (tx) => {
       const created = await tx.purchase.create({
         data: {
@@ -194,6 +205,7 @@ export class SuppliersService {
           supplierId: input.supplierId,
           receivedById: userId,
           total,
+          createdAt,
           note: input.note,
           items: {
             create: lines.map((l) => ({
@@ -222,6 +234,7 @@ export class SuppliersService {
             type: 'IN',
             quantity: line.quantity,
             note: `Purchase ${purchaseNumber}`,
+            createdAt,
           },
         });
         if (input.updateCostPrice && line.unitCost > 0) {
@@ -240,6 +253,7 @@ export class SuppliersService {
             purchaseId: created.id,
             amount: input.paidAmount,
             paymentMethod: input.paymentMethod,
+            createdAt,
           },
         });
         await this.recordAsExpense(tx, tenant, payment, supplier.name);
@@ -271,7 +285,9 @@ export class SuppliersService {
             id: true,
             name: true,
             isDefault: true,
-            product: { select: { id: true, name: true, costPrice: true } },
+            product: {
+              select: { id: true, name: true, costPrice: true, imageUrl: true },
+            },
           },
         },
       },
@@ -309,6 +325,7 @@ export class SuppliersService {
           name: variant.isDefault
             ? variant.product.name
             : `${variant.product.name} (${variant.name})`,
+          imageUrl: variant.product.imageUrl,
           stock: quantity,
           lowStock,
           suggestedQuantity: Math.max(lowStock * 2 - quantity, 1),
@@ -335,6 +352,7 @@ export class SuppliersService {
     tenant: TenantContext,
     payment: {
       id: string;
+      createdAt: Date;
       amount: number;
       paymentMethod: PaymentMethod;
       note: string | null;
@@ -352,7 +370,7 @@ export class SuppliersService {
         shopId: tenant.shopId,
         title: `Paid ${supplierName}`,
         amount: payment.amount,
-        date: new Date(),
+        date: payment.createdAt,
         categoryId: category.id,
         paymentMethod: payment.paymentMethod,
         status: 'PAID',

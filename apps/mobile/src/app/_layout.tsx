@@ -1,13 +1,19 @@
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
 
+import { AnimatedSplash } from '@/components/animated-splash';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { queryClient } from '@/lib/query-client';
+import { restoreColorScheme } from '@/lib/appearance';
+import { LanguageProvider } from '@/lib/i18n';
+import { installNetworkListeners } from '@/lib/network';
+import { persistOptions, queryClient } from '@/lib/query-client';
 import { SessionProvider, useSession } from '@/lib/session';
 
 SplashScreen.preventAutoHideAsync();
+installNetworkListeners();
 
 export default function RootLayout() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
@@ -15,33 +21,47 @@ export default function RootLayout() {
   const colors = Colors[scheme];
 
   return (
-    <QueryClientProvider client={queryClient}>
+    // Restores the data saved on the phone, so the app works offline.
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
       <SessionProvider>
-        <ThemeProvider
-          value={{
-            ...base,
-            colors: {
-              ...base.colors,
-              primary: colors.primary,
-              background: colors.background,
-              card: colors.backgroundElement,
-              text: colors.text,
-              border: colors.border,
-            },
-          }}>
-          <SplashScreenController />
-          <RootNavigator />
-        </ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider
+            value={{
+              ...base,
+              colors: {
+                ...base.colors,
+                primary: colors.primary,
+                background: colors.background,
+                card: colors.backgroundElement,
+                text: colors.text,
+                border: colors.border,
+              },
+            }}>
+            <RootNavigator />
+            {/* Drawn last so it covers the app while it loads. */}
+            <SplashScreenController />
+          </ThemeProvider>
+        </LanguageProvider>
       </SessionProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }
 
-/** Keep the splash up until we know whether a saved session is still valid. */
+/**
+ * The native splash stays up until the saved light/dark choice is applied (so
+ * the animated splash starts in the right colours). Then the animated splash
+ * takes over and plays until the session check is done.
+ */
 function SplashScreenController() {
   const { status } = useSession();
-  if (status !== 'loading') SplashScreen.hide();
-  return null;
+  const [schemeReady, setSchemeReady] = useState(false);
+
+  useEffect(() => {
+    void restoreColorScheme().finally(() => setSchemeReady(true));
+  }, []);
+
+  if (!schemeReady) return null;
+  return <AnimatedSplash ready={status !== 'loading'} />;
 }
 
 /** signed out → auth screens · no business yet → onboarding · otherwise the app. */

@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { totalStock } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
 /**
  * Grid card for the Browse mode. Tap adds one; once in the cart, a −/+ pill
@@ -28,8 +29,9 @@ export function ProductCard({
   onDecrease: () => void;
 }) {
   const theme = useTheme();
+  const t = useT();
   const stock = totalStock(product.variants);
-  const tracked = product.variants.length > 0;
+  const tracked = product.variants.length > 0 && product.kind !== 'SERVICE';
   const out = tracked && stock <= 0;
   const low = tracked && !out && product.variants.some((v) => v.stock <= v.lowStock);
 
@@ -42,8 +44,8 @@ export function ProductCard({
     <Pressable
       onPress={tap(onAdd)}
       accessibilityRole="button"
-      accessibilityLabel={`Add ${product.name}, ${formatCurrency(product.price)}`}
-      accessibilityHint={quantity ? `${quantity} in cart` : undefined}
+      accessibilityLabel={t('sellParts.addA11y', { name: product.name, price: formatCurrency(product.price) })}
+      accessibilityHint={quantity ? t('sellParts.inCart', { count: quantity }) : undefined}
       style={({ pressed }) => ({
         flex: 1,
         padding: Spacing.two,
@@ -76,7 +78,7 @@ export function ProductCard({
             }}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Remove one ${product.name}`}
+              accessibilityLabel={t('sellParts.removeOneA11y', { name: product.name })}
               hitSlop={8}
               onPress={tap(onDecrease)}
               style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
@@ -87,7 +89,7 @@ export function ProductCard({
             </ThemedText>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Add one ${product.name}`}
+              accessibilityLabel={t('sellParts.addOneA11y', { name: product.name })}
               hitSlop={8}
               onPress={tap(onAdd)}
               style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
@@ -107,7 +109,7 @@ export function ProductCard({
           </ThemedText>
           {tracked && (
             <ThemedText type="caption" themeColor={out || low ? 'danger' : 'textSecondary'}>
-              {out ? 'Out' : `${stock} left`}
+              {out ? t('sellParts.out') : t('sellParts.left', { count: stock })}
             </ThemedText>
           )}
         </View>

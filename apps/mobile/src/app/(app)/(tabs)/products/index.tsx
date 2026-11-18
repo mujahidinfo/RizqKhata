@@ -6,6 +6,7 @@ import { useAnalyticsOverview, useCategories, useProducts } from '@/api/queries'
 import type { Product } from '@/api/types';
 import { Fab, FAB_CLEARANCE } from '@/components/fab';
 import { FilterBar } from '@/components/filter-bar';
+import { TabScreen } from '@/components/safe-area';
 import { Icon } from '@/components/icon';
 import { IconTile, TINT } from '@/components/icon-tile';
 import { ProductThumb } from '@/components/product-thumb';
@@ -17,11 +18,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { isLowStock, totalStock, useFormatCurrency } from '@/lib/format';
 import { canEditCatalog } from '@/lib/roles';
 import { useActiveShop } from '@/lib/session';
+import { useT } from '@/lib/i18n';
 
 const CARD_SHADOW = '0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.03)';
 
 export default function ProductsScreen() {
   const theme = useTheme();
+  const t = useT();
   const shop = useActiveShop();
   const formatCurrency = useFormatCurrency();
   const [search, setSearch] = useState('');
@@ -38,16 +41,17 @@ export default function ProductsScreen() {
   const products = query.data?.pages.flatMap((p) => p.items) ?? [];
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <TabScreen style={{ backgroundColor: theme.background }}>
       <FilterBar
         search={search}
         onSearch={setSearch}
-        placeholder="Name, SKU or barcode"
-        chips={[{ label: 'All' }, ...(categories.data ?? []).map((c) => ({ label: c.name, value: c.id }))]}
+        placeholder={t('products.searchPlaceholder')}
+        chips={[{ label: t('common.all') }, ...(categories.data ?? []).map((c) => ({ label: c.name, value: c.id }))]}
         selected={categoryId}
         onSelect={setCategoryId}
       />
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={products}
         keyExtractor={(p) => p.id}
         keyboardShouldPersistTaps="handled"
@@ -79,14 +83,14 @@ export default function ProductsScreen() {
               <IconTile name="alert" tint={TINT.rose} size={40} />
               <View style={{ flex: 1, gap: 2 }}>
                 <ThemedText type="smallBold" themeColor="danger">
-                  {lowStockCount} item{lowStockCount === 1 ? '' : 's'} running low
+                  {t('products.runningLow', { count: lowStockCount })}
                 </ThemedText>
                 <ThemedText type="caption" themeColor="textSecondary">
-                  Restock before you run out
+                  {t('products.restockHint')}
                 </ThemedText>
               </View>
               <ThemedText type="smallBold" themeColor="primary">
-                Reorder ›
+                {t('products.reorder')}
               </ThemedText>
             </Pressable>
           ) : undefined
@@ -106,12 +110,12 @@ export default function ProductsScreen() {
             isLoading={query.isLoading}
             error={query.error}
             onRetry={query.refetch}
-            emptyTitle={filtered ? 'No matching products' : 'No products yet'}
+            emptyTitle={filtered ? t('products.noMatching') : t('products.noProducts')}
             emptyMessage={
               filtered
-                ? 'Try a different search or category.'
+                ? t('products.tryDifferent')
                 : canAdd
-                  ? 'Tap + to put your first product on the shelf.'
+                  ? t('products.tapPlus')
                   : undefined
             }
           />
@@ -125,14 +129,16 @@ export default function ProductsScreen() {
         }
       />
 
-      {canAdd && <Fab label="Add product" onPress={() => router.push('/new-product')} />}
-    </View>
+      {canAdd && <Fab label={t('products.addProduct')} onPress={() => router.push('/new-product')} />}
+    </TabScreen>
   );
 }
 
 function ProductCard({ product, price }: { product: Product; price: string }) {
   const theme = useTheme();
-  const hasVariants = product.variants.length > 0;
+  const t = useT();
+  const isService = product.kind === 'SERVICE';
+  const hasVariants = product.variants.length > 0 && !isService;
   const stock = totalStock(product.variants);
   const out = hasVariants && stock === 0;
   const low = hasVariants && isLowStock(product.variants);
@@ -165,11 +171,18 @@ function ProductCard({ product, price }: { product: Product; price: string }) {
             {subtitle}
           </ThemedText>
         ) : null}
+        {isService && (
+          <ThemedText type="caption" themeColor="primary" style={{ fontWeight: 600 }}>
+            {[t('products.serviceTag'), product.warrantyDays ? t('products.warrantyTag', { count: product.warrantyDays }) : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </ThemedText>
+        )}
         {hasVariants && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: stockColor }} />
             <ThemedText type="caption" style={{ color: stockColor, fontWeight: 600 }}>
-              {out ? 'Out of stock' : low ? `Low · ${stock} left` : `${stock} in stock`}
+              {out ? t('products.outOfStock') : low ? t('products.lowLeft', { count: stock }) : t('products.inStock', { count: stock })}
             </ThemedText>
           </View>
         )}

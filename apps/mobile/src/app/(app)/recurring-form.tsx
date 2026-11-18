@@ -15,14 +15,13 @@ import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { localeFor, useLanguage, useT, type Language } from '@/lib/i18n';
 
-const METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'CASH', label: 'Cash' },
-  { value: 'MOBILE_MONEY', label: 'bKash / Mobile' },
-  { value: 'BANK_TRANSFER', label: 'Bank' },
-];
+const METHODS: PaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'BANK_TRANSFER'];
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+/** Short weekday names, Sunday first, in the app language (7 Jan 2024 was a Sunday). */
+const weekdays = (language: Language) =>
+  Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 7 + i).toLocaleDateString(localeFor(language), { weekday: 'short' }));
 
 /** Next date (local noon) whose day-of-month is `day`, today included. */
 function nextMonthly(day: number) {
@@ -42,8 +41,8 @@ function nextWeekly(weekday: number) {
   return d;
 }
 
-const describe = (d: Date) =>
-  d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const describe = (d: Date, language: Language) =>
+  d.toLocaleDateString(localeFor(language), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
 /** Add (`/recurring-form`) or edit (`/recurring-form?id=…`) a repeating bill. */
 export default function RecurringFormScreen() {
@@ -57,6 +56,8 @@ export default function RecurringFormScreen() {
 
 function RecurringForm({ bill }: { bill?: RecurringBill }) {
   const theme = useTheme();
+  const t = useT();
+  const language = useLanguage();
   const insets = useSafeAreaInsets();
   const save = useSaveRecurring();
   const remove = useDeleteRecurring();
@@ -98,7 +99,7 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save the bill.');
+      setError(e instanceof Error ? e.message : t('recurringForm.couldNotSave'));
     }
   };
 
@@ -109,13 +110,13 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
         await remove.mutateAsync(bill.id);
         router.back();
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Could not delete.');
+        setError(e instanceof Error ? e.message : t('expenseForm.couldNotDelete'));
       }
     };
     if (Platform.OS === 'web') return void go();
-    Alert.alert('Stop this bill?', 'Past payments stay in your expenses.', [
-      { text: 'Keep', style: 'cancel' },
-      { text: 'Stop', style: 'destructive', onPress: go },
+    Alert.alert(t('recurringForm.stopTitle'), t('recurringForm.stopBody'), [
+      { text: t('expenseForm.keep'), style: 'cancel' },
+      { text: t('recurringForm.stop'), style: 'destructive', onPress: go },
     ]);
   };
 
@@ -123,14 +124,14 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen
         options={{
-          title: bill ? 'Edit bill' : 'New bill',
-          headerRight: bill ? () => <HeaderButton title="Stop" tone="danger" onPress={confirmDelete} /> : undefined,
+          title: bill ? t('recurringForm.edit') : t('recurringForm.new'),
+          headerRight: bill ? () => <HeaderButton title={t('recurringForm.stop')} tone="danger" onPress={confirmDelete} /> : undefined,
         }}
       />
       <ScrollView contentContainerStyle={{ padding: Spacing.three, gap: Spacing.three }} keyboardShouldPersistTaps="handled">
         <View style={{ gap: Spacing.one }}>
           <ThemedText type="small" themeColor="textSecondary">
-            Amount each time
+            {t('recurringForm.amountEach')}
           </ThemedText>
           <TextInput
             value={amount}
@@ -139,12 +140,16 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
             keyboardType="decimal-pad"
             placeholder="0"
             placeholderTextColor={theme.textSecondary}
-            accessibilityLabel="Amount"
+            accessibilityLabel={t('expenseForm.amount')}
             style={{ fontSize: 40, fontWeight: 700, color: theme.text, borderBottomWidth: 2, borderColor: theme.border, paddingVertical: Spacing.one }}
           />
         </View>
 
-        <TextField label="Bill name" value={title} onChangeText={setTitle} placeholder="e.g. Shop rent" autoCapitalize="sentences" />
+        <TextField
+          label={t('recurringForm.billName')}
+          value={title}
+          onChangeText={setTitle}
+          placeholder={t('recurringForm.namePlaceholder')} autoCapitalize="sentences" />
 
         <CategoryPicker value={categoryId} onChange={(id, name) => {
           setCategoryId(id);
@@ -153,12 +158,12 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
 
         <View style={{ gap: Spacing.two }}>
           <ThemedText type="small" themeColor="textSecondary">
-            Repeats
+            {t('recurringForm.repeats')}
           </ThemedText>
           <Segmented
             options={[
-              { value: 'MONTHLY', label: 'Every month' },
-              { value: 'WEEKLY', label: 'Every week' },
+              { value: 'MONTHLY', label: t('recurringForm.everyMonth') },
+              { value: 'WEEKLY', label: t('recurringForm.everyWeek') },
             ]}
             value={frequency}
             onChange={(f) => {
@@ -170,7 +175,7 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
 
         {frequency === 'MONTHLY' ? (
           <TextField
-            label="Due on day of the month (1–28)"
+            label={t('recurringForm.dayOfMonth')}
             value={day}
             onChangeText={(t) => {
               setDay(t.replace(/\D/g, '').slice(0, 2));
@@ -179,8 +184,8 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
             keyboardType="number-pad"
           />
         ) : (
-          <ChipGroup label="Due every">
-            {WEEKDAYS.map((name, i) => (
+          <ChipGroup label={t('recurringForm.dueEvery')}>
+            {weekdays(language).map((name, i) => (
               <Chip
                 key={name}
                 label={name}
@@ -194,25 +199,29 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
           </ChipGroup>
         )}
         <ThemedText type="caption" themeColor="textSecondary">
-          Next due: {describe(nextDue)}
+          {t('recurringForm.nextDue', { date: describe(nextDue, language) })}
         </ThemedText>
 
         <View style={{ gap: Spacing.two }}>
           <ThemedText type="small" themeColor="textSecondary">
-            Usually paid by
+            {t('recurringForm.usuallyPaidBy')}
           </ThemedText>
-          <Segmented options={METHODS} value={method} onChange={setMethod} />
+          <Segmented
+            options={METHODS.map((value) => ({ value, label: t(`common.paymentMethods.${value}`) }))}
+            value={method}
+            onChange={setMethod}
+          />
         </View>
 
         {bill && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.three }}>
             <View style={{ flex: 1 }}>
-              <ThemedText>Reminders on</ThemedText>
+              <ThemedText>{t('recurringForm.remindersOn')}</ThemedText>
               <ThemedText type="caption" themeColor="textSecondary">
-                Turn off to pause this bill without deleting it.
+                {t('recurringForm.pauseHint')}
               </ThemedText>
             </View>
-            <Switch value={active} onValueChange={setActive} trackColor={{ true: theme.primary }} accessibilityLabel="Reminders on" />
+            <Switch value={active} onValueChange={setActive} trackColor={{ true: theme.primary }} accessibilityLabel={t('recurringForm.remindersOn')} />
           </View>
         )}
 
@@ -231,7 +240,7 @@ function RecurringForm({ bill }: { bill?: RecurringBill }) {
           borderColor: theme.border,
           backgroundColor: theme.backgroundElement,
         }}>
-        <Button title={bill ? 'Save' : 'Add bill'} onPress={submit} loading={save.isPending} disabled={!valid} />
+        <Button title={bill ? t('common.save') : t('recurringForm.add')} onPress={submit} loading={save.isPending} disabled={!valid} />
       </View>
     </KeyboardAvoidingView>
   );

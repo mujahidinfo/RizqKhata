@@ -16,6 +16,7 @@ import { lineFor, useCart } from '@/lib/cart';
 import { useFormatCurrency } from '@/lib/format';
 import { canEditCatalog } from '@/lib/roles';
 import { useActiveShop } from '@/lib/session';
+import { useT } from '@/lib/i18n';
 
 /**
  * Find and add items that have no barcode (loose produce, services…). Tapping
@@ -23,6 +24,7 @@ import { useActiveShop } from '@/lib/session';
  */
 export default function AddItemScreen() {
   const theme = useTheme();
+  const t = useT();
   const shop = useActiveShop();
   const cart = useCart();
   const formatCurrency = useFormatCurrency();
@@ -42,7 +44,7 @@ export default function AddItemScreen() {
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <Stack.Screen
         options={{
-          headerRight: () => <HeaderButton title="Done" onPress={() => router.back()} />,
+          headerRight: () => <HeaderButton title={t('common.done')} onPress={() => router.back()} />,
         }}
       />
       <View style={styles.searchWrap}>
@@ -50,7 +52,7 @@ export default function AddItemScreen() {
           autoFocus
           value={search}
           onChangeText={setSearch}
-          placeholder="Search name, SKU or barcode"
+          placeholder={t('addItem.searchPlaceholder')}
           placeholderTextColor={theme.textSecondary}
           returnKeyType="search"
           style={[
@@ -77,7 +79,7 @@ export default function AddItemScreen() {
                 <Pressable
                   key={v.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`Add ${item.name}${v.isDefault ? '' : ` ${v.name}`}`}
+                  accessibilityLabel={t('addItem.addA11y', { name: v.isDefault ? item.name : `${item.name} ${v.name}` })}
                   onPress={() => add(item, v.id)}
                   style={({ pressed }) => [
                     styles.variant,
@@ -103,8 +105,8 @@ export default function AddItemScreen() {
             isLoading={query.isLoading}
             error={query.error}
             onRetry={query.refetch}
-            emptyTitle={debounced ? 'No matching products' : 'No products yet'}
-            emptyMessage={canEditCatalog(shop.role) ? 'Scan a new item on the Sell tab to add it.' : undefined}
+            emptyTitle={debounced ? t('addItem.noMatching') : t('addItem.noProducts')}
+            emptyMessage={canEditCatalog(shop.role) ? t('addItem.scanToAdd') : undefined}
           />
         }
       />

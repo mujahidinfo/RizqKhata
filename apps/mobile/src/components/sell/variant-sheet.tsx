@@ -6,6 +6,7 @@ import { ProductThumb } from '@/components/product-thumb';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useT } from '@/lib/i18n';
 
 /** Pick a size/colour for a product with several variants. */
 export function VariantSheet({
@@ -21,11 +22,12 @@ export function VariantSheet({
 }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const t = useT();
 
   return (
     <Modal visible={!!product} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
       <Pressable
-        accessibilityLabel="Close"
+        accessibilityLabel={t('common.close')}
         onPress={onClose}
         style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)' }}
       />
@@ -47,7 +49,7 @@ export function VariantSheet({
                 {product.name}
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Choose one to add
+                {t('sellParts.chooseOne')}
               </ThemedText>
             </View>
           </View>
@@ -56,7 +58,7 @@ export function VariantSheet({
               <Pressable
                 key={v.id}
                 accessibilityRole="button"
-                accessibilityLabel={`${v.name}, ${v.stock} in stock`}
+                accessibilityLabel={t('sellParts.variantA11y', { name: v.name, stock: v.stock })}
                 onPress={() => onPick(v.id)}
                 style={({ pressed }) => ({
                   minWidth: 88,

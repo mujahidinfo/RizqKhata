@@ -69,7 +69,7 @@ export function BranchSwitcher({ user }: { user: AuthUser }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="mr-auto flex items-center gap-2 h-9 px-2.5 rounded-xl hover:bg-slate-50 transition-colors min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+          <button className="mr-auto flex items-center gap-2 h-9 px-2.5 rounded-xl hover:bg-slate-50 transition-colors min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500">
             <Store className="h-4 w-4 text-slate-400 shrink-0" />
             <span className="truncate text-sm font-medium text-slate-700">{user.shop.name}</span>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -92,7 +92,7 @@ export function BranchSwitcher({ user }: { user: AuthUser }) {
                   <p className="truncate text-xs text-slate-400">{shop.businessName}</p>
                 )}
               </div>
-              {shop.id === user.shop?.id && <Check className="h-4 w-4 text-indigo-600" />}
+              {shop.id === user.shop?.id && <Check className="h-4 w-4 text-brand-600" />}
             </DropdownMenuItem>
           ))}
           {isOwner && (

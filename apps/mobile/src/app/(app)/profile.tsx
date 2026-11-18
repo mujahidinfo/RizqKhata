@@ -26,17 +26,17 @@ import {
   uploadAvatarPhoto,
   type PhotoSource,
 } from '@/lib/product-photo';
-import { canManage, ROLE_LABEL } from '@/lib/roles';
+import { canManage } from '@/lib/roles';
 import { useActiveShop, useCurrentUser, useSession } from '@/lib/session';
-
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'bn', label: 'বাংলা' },
-] as const;
+import { useIsOnline } from '@/lib/network';
+import { useSyncState } from '@/lib/outbox';
+import { LANGUAGES, useT } from '@/lib/i18n';
+import { useBusinessType } from '@/lib/business';
 
 /** You, your shop and its settings. Everyone can look; owners and managers can change. */
 export default function ProfileScreen() {
   const theme = useTheme();
+  const t = useT();
   const user = useCurrentUser();
   const active = useActiveShop();
   const { workspaces, signOut, updateUser } = useSession();
@@ -46,6 +46,8 @@ export default function ProfileScreen() {
   const update = useUpdateShop();
   const [error, setError] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
+  const unsynced = useSyncState(useIsOnline()).items;
+  const businessType = useBusinessType();
   // While editing tax: true = toggle just switched on and not saved yet.
   const [taxDraft, setTaxDraft] = useState(false);
 
@@ -63,7 +65,7 @@ export default function ProfileScreen() {
       if (process.env.EXPO_OS === 'ios') void Haptics.selectionAsync();
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save that change.');
+      setError(e instanceof Error ? e.message : t('profile.couldNotSave'));
       return false;
     }
   };
@@ -87,7 +89,7 @@ export default function ProfileScreen() {
       updateUser({ avatarUrl: await uploadAvatarPhoto(uri) });
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update your photo.');
+      setError(e instanceof Error ? e.message : t('profile.couldNotUpdatePhoto'));
     } finally {
       setPhotoBusy(false);
     }
@@ -100,7 +102,7 @@ export default function ProfileScreen() {
       await removeAvatarPhoto();
       updateUser({ avatarUrl: null });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not remove your photo.');
+      setError(e instanceof Error ? e.message : t('profile.couldNotRemovePhoto'));
     } finally {
       setPhotoBusy(false);
     }
@@ -110,7 +112,12 @@ export default function ProfileScreen() {
     if (photoBusy) return;
     const removable = Boolean(user.avatarUrl);
     if (process.env.EXPO_OS === 'ios') {
-      const options = ['Take photo', 'Choose from library', ...(removable ? ['Remove photo'] : []), 'Cancel'];
+      const options = [
+        t('newProduct.takePhoto'),
+        t('newProduct.chooseLibrary'),
+        ...(removable ? [t('newProduct.removePhoto')] : []),
+        t('common.cancel'),
+      ];
       ActionSheetIOS.showActionSheetWithOptions(
         { options, cancelButtonIndex: options.length - 1, destructiveButtonIndex: removable ? 2 : undefined },
         (index) => {
@@ -121,11 +128,11 @@ export default function ProfileScreen() {
       );
       return;
     }
-    Alert.alert('Profile photo', undefined, [
-      { text: 'Take photo', onPress: () => void changePhoto('camera') },
-      { text: 'Choose from gallery', onPress: () => void changePhoto('library') },
-      ...(removable ? [{ text: 'Remove', style: 'destructive' as const, onPress: () => void removePhoto() }] : []),
-      { text: 'Cancel', style: 'cancel' as const },
+    Alert.alert(t('profile.profilePhoto'), undefined, [
+      { text: t('newProduct.takePhoto'), onPress: () => void changePhoto('camera') },
+      { text: t('newProduct.chooseGallery'), onPress: () => void changePhoto('library') },
+      ...(removable ? [{ text: t('common.remove'), style: 'destructive' as const, onPress: () => void removePhoto() }] : []),
+      { text: t('common.cancel'), style: 'cancel' as const },
     ]);
   };
 
@@ -136,9 +143,13 @@ export default function ProfileScreen() {
     };
     // Alert.alert has no buttons on web.
     if (Platform.OS === 'web') return void out();
-    Alert.alert('Sign out?', 'You will need your email and password to sign back in.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: out },
+    const waiting = unsynced.length;
+    const message = waiting
+      ? t('profile.unsynced', { count: waiting })
+      : t('profile.signOutBody');
+    Alert.alert(t('profile.signOutTitle'), message, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('profile.signOut'), style: 'destructive', onPress: out },
     ]);
   };
 
@@ -152,7 +163,7 @@ export default function ProfileScreen() {
       <View style={{ alignItems: 'center', gap: Spacing.two, paddingVertical: Spacing.two }}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Change profile photo"
+          accessibilityLabel={t('profile.changePhoto')}
           onPress={askPhotoSource}
           style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}>
           <Avatar name={user.name} avatarUrl={user.avatarUrl} size={96} />
@@ -192,30 +203,30 @@ export default function ProfileScreen() {
         <ThemedText themeColor="textSecondary" selectable>
           {user.email}
         </ThemedText>
-        <Badge label={ROLE_LABEL[active.role]} tone="primary" />
+        <Badge label={t(`roles.${active.role}`)} tone="primary" />
       </View>
 
       {/* Shop details */}
       <SettingGroup
-        title="Shop"
-        footer={manager ? undefined : 'Only owners and managers can change shop details and settings.'}>
-        <SettingRow icon="store" tint={TINT.indigo} title="Shop name" value={shop.name} onPress={editShop} />
-        <SettingRow icon="phone" tint={TINT.emerald} title="Phone" value={shop.phone || 'Not set'} onPress={editShop} />
+        title={t('profile.shop')}
+        footer={manager ? undefined : t('profile.managersOnly')}>
+        <SettingRow icon="store" tint={TINT.indigo} title={t('profile.shopName')} value={shop.name} onPress={editShop} />
+        <SettingRow icon="phone" tint={TINT.emerald} title={t('profile.phone')} value={shop.phone || t('profile.notSet')} onPress={editShop} />
         <SettingRow
           icon="pin"
           tint={TINT.rose}
-          title="Address"
-          subtitle={shop.address || 'Not set'}
+          title={t('profile.address')}
+          subtitle={shop.address || t('profile.notSet')}
           onPress={editShop}
         />
         {(shop.email || manager) && (
-          <SettingRow icon="mail" tint={TINT.sky} title="Email" value={shop.email || 'Not set'} onPress={editShop} />
+          <SettingRow icon="mail" tint={TINT.sky} title={t('profile.email')} value={shop.email || t('profile.notSet')} onPress={editShop} />
         )}
         {(branchCount > 1 || active.role === 'OWNER') && (
           <SettingRow
             icon="branches"
             tint={TINT.teal}
-            title="Branch"
+            title={t('profile.branch')}
             value={active.name}
             onPress={() => router.push('/branches')}
           />
@@ -223,12 +234,12 @@ export default function ProfileScreen() {
       </SettingGroup>
 
       {/* Settings */}
-      <SettingGroup title="Settings">
+      <SettingGroup title={t('profile.settings')}>
         <SettingRow
           icon="globe"
           tint={TINT.violet}
-          title="Language"
-          subtitle="Used for numbers and the web dashboard"
+          title={t('profile.language')}
+          subtitle={t('profile.languageHint')}
           right={
             manager ? (
               <LanguagePills value={shop.language} disabled={update.isPending} onChange={(language) => save({ language })} />
@@ -237,24 +248,31 @@ export default function ProfileScreen() {
           value={manager ? undefined : (LANGUAGES.find((l) => l.code === shop.language)?.label ?? shop.language)}
         />
         <SettingRow
+          icon="wrench"
+          tint={TINT.emerald}
+          title={t('businessType.setting')}
+          value={t(`businessType.${businessType}`)}
+          onPress={manager ? () => router.push('/business-type') : undefined}
+        />
+        <SettingRow
           icon="currency"
           tint={TINT.amber}
-          title="Currency"
+          title={t('profile.currency')}
           value={currency ? `${currency.code} · ${currency.symbol}` : shop.currency}
           onPress={manager ? () => router.push('/currency') : undefined}
         />
         <SettingRow
           icon="percent"
           tint={TINT.rose}
-          title="Tax"
-          subtitle={taxActive ? `${shop.taxName} ${shop.taxRate}% is added to every sale` : 'Not added to sales'}
+          title={t('profile.tax')}
+          subtitle={taxActive ? t('profile.taxAdded', { name: shop.taxName, rate: shop.taxRate }) : t('profile.taxNotAdded')}
           right={
             <Switch
               value={taxOn}
               onValueChange={toggleTax}
               disabled={!manager || update.isPending}
               trackColor={{ true: theme.primary }}
-              accessibilityLabel="Add tax to sales"
+              accessibilityLabel={t('profile.addTaxA11y')}
             />
           }
         />
@@ -272,11 +290,11 @@ export default function ProfileScreen() {
         <SettingRow
           icon="box"
           tint={TINT.sky}
-          title="Sell below zero stock"
+          title={t('profile.sellBelowZero')}
           subtitle={
             shop.allowNegativeStock
-              ? 'Sales are never blocked; recount when stock goes negative'
-              : 'Block a sale when there isn’t enough stock'
+              ? t('profile.neverBlocked')
+              : t('profile.blockSale')
           }
           right={
             <Switch
@@ -284,7 +302,7 @@ export default function ProfileScreen() {
               onValueChange={(allowNegativeStock) => void save({ allowNegativeStock })}
               disabled={!manager || update.isPending}
               trackColor={{ true: theme.primary }}
-              accessibilityLabel="Sell below zero stock"
+              accessibilityLabel={t('profile.sellBelowZero')}
             />
           }
         />
@@ -297,12 +315,12 @@ export default function ProfileScreen() {
       )}
 
       {/* Account */}
-      <SettingGroup title="Account">
-        <SettingRow icon="lock" tint={TINT.slate} title="Change password" onPress={() => router.push('/change-password')} />
+      <SettingGroup title={t('profile.account')}>
+        <SettingRow icon="lock" tint={TINT.slate} title={t('profile.changePassword')} onPress={() => router.push('/change-password')} />
         <SettingRow
           icon="logout"
           tint={theme.danger}
-          title={signingOut ? 'Signing out…' : 'Sign out'}
+          title={signingOut ? t('profile.signingOut') : t('profile.signOut')}
           danger
           onPress={signingOut ? undefined : confirmSignOut}
         />
@@ -310,7 +328,7 @@ export default function ProfileScreen() {
 
       <View style={{ alignItems: 'center', gap: 2 }}>
         <ThemedText type="caption" themeColor="textSecondary">
-          GenPOS {Constants.expoConfig?.version ?? ''}
+          Rizq Khata {Constants.expoConfig?.version ?? ''}
         </ThemedText>
         {__DEV__ && (
           <ThemedText type="caption" themeColor="textSecondary" selectable>
@@ -382,6 +400,7 @@ function TaxEditor({
   saving: boolean;
   onSave: (patch: Pick<Shop, 'taxRate' | 'taxName'>) => void;
 }) {
+  const t = useT();
   const [rate, setRate] = useState(initialRate > 0 ? String(initialRate) : '');
   const [name, setName] = useState(initialName);
 
@@ -393,11 +412,15 @@ function TaxEditor({
     <View style={{ gap: Spacing.three, padding: Spacing.three }}>
       <View style={{ flexDirection: 'row', gap: Spacing.three }}>
         <View style={{ flex: 2 }}>
-          <TextField label="Tax name" value={name} onChangeText={setName} placeholder="VAT" maxLength={30} />
+          <TextField
+            label={t('profile.taxName')}
+            value={name}
+            onChangeText={setName}
+            placeholder={t('profile.taxNamePlaceholder')} maxLength={30} />
         </View>
         <View style={{ flex: 1 }}>
           <TextField
-            label="Rate %"
+            label={t('profile.rate')}
             value={rate}
             onChangeText={setRate}
             placeholder="5"
@@ -407,7 +430,7 @@ function TaxEditor({
         </View>
       </View>
       <Button
-        title={initialRate > 0 ? 'Save tax' : 'Add tax to sales'}
+        title={initialRate > 0 ? t('profile.saveTax') : t('profile.addTax')}
         onPress={() => onSave({ taxRate: rateValue, taxName: name.trim() })}
         loading={saving}
         disabled={!valid || !dirty}

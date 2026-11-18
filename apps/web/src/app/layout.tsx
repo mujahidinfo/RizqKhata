@@ -26,10 +26,10 @@ const gothic = Archivo_Narrow({
   variable: "--font-gothic",
 });
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "GenPOS";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Rizq Khata";
 
 export const metadata: Metadata = {
-  title: "GenPOS – Point of Sale",
+  title: "Rizq Khata – Point of Sale",
   description: "Modern point-of-sale system for small shops",
   applicationName: APP_NAME,
   manifest: "/manifest.webmanifest",
@@ -58,7 +58,7 @@ export const viewport: Viewport = {
   // devices in globals.css instead.
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#4f46e5" },
+    { media: "(prefers-color-scheme: light)", color: "#17694C" },
     { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
 };

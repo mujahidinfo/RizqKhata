@@ -11,12 +11,14 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useCart } from '@/lib/cart';
 import { useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
 /** Review the current sale before charging. */
 export default function CartScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const cart = useCart();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
 
   const confirmClear = () => {
@@ -25,9 +27,9 @@ export default function CartScreen() {
       router.back();
     };
     if (Platform.OS === 'web') return clear();
-    Alert.alert('Clear this sale?', 'All items will be removed from the cart.', [
-      { text: 'Keep', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: clear },
+    Alert.alert(t('cart.clearTitle'), t('cart.clearBody'), [
+      { text: t('cart.keep'), style: 'cancel' },
+      { text: t('cart.clear'), style: 'destructive', onPress: clear },
     ]);
   };
 
@@ -35,9 +37,9 @@ export default function CartScreen() {
     <View style={{ flex: 1, backgroundColor: theme.background }}>
       <Stack.Screen
         options={{
-          title: `Cart · ${cart.itemCount}`,
+          title: t('cart.title', { count: cart.itemCount }),
           headerRight: cart.lines.length
-            ? () => <HeaderButton title="Clear" tone="danger" onPress={confirmClear} />
+            ? () => <HeaderButton title={t('cart.clear')} tone="danger" onPress={confirmClear} />
             : undefined,
         }}
       />
@@ -57,8 +59,8 @@ export default function CartScreen() {
         )}
         ListEmptyComponent={
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.three, padding: Spacing.five }}>
-            <ThemedText type="smallBold">The cart is empty</ThemedText>
-            <Button title="Keep selling" variant="secondary" onPress={() => router.back()} />
+            <ThemedText type="smallBold">{t('cart.empty')}</ThemedText>
+            <Button title={t('cart.keepSelling')} variant="secondary" onPress={() => router.back()} />
           </View>
         }
       />
@@ -80,7 +82,7 @@ export default function CartScreen() {
               {formatCurrency(cart.subtotal)}
             </ThemedText>
           </View>
-          <Button title="Charge" onPress={() => router.replace('/checkout')} />
+          <Button title={t('sellParts.charge')} onPress={() => router.replace('/checkout')} />
         </View>
       )}
     </View>

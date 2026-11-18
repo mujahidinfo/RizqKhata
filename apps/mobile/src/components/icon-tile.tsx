@@ -14,14 +14,24 @@ export const TINT = {
   slate: '#64748B',
 } as const;
 
-/** Rounded-square icon on a soft tint of its own colour. */
-export function IconTile({ name, tint, size = 40 }: { name: IconName; tint: string; size?: number }) {
+/** Rounded-square (or `round`) icon on a soft tint of its own colour. */
+export function IconTile({
+  name,
+  tint,
+  size = 40,
+  round = false,
+}: {
+  name: IconName;
+  tint: string;
+  size?: number;
+  round?: boolean;
+}) {
   return (
     <View
       style={{
         width: size,
         height: size,
-        borderRadius: size * 0.3,
+        borderRadius: round ? size / 2 : size * 0.3,
         borderCurve: 'continuous',
         alignItems: 'center',
         justifyContent: 'center',

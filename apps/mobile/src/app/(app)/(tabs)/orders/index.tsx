@@ -6,36 +6,33 @@ import { useOrders } from '@/api/queries';
 import type { Order, OrderStatus, PaymentMethod } from '@/api/types';
 import { OrderStatusBadge } from '@/components/badge';
 import { FilterBar } from '@/components/filter-bar';
+import { TabScreen } from '@/components/safe-area';
 import type { IconName } from '@/components/icon';
 import { Icon } from '@/components/icon';
 import { IconTile, TINT } from '@/components/icon-tile';
 import { QueryState } from '@/components/query-state';
 import { ThemedText } from '@/components/themed-text';
-import { BottomTabInset, Radius, Spacing } from '@/constants/theme';
+import { PendingSyncBanner } from '@/components/pending-sync-banner';
+import { Radius, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { formatRelativeDay, useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
-const BOTTOM_OFFSET = (process.env.EXPO_OS === 'ios' ? BottomTabInset : 0) + Spacing.three;
 const CARD_SHADOW = '0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.03)';
 
-const FILTERS: { label: string; value?: OrderStatus }[] = [
-  { label: 'All' },
-  { label: 'Completed', value: 'FULFILLED' },
-  { label: 'Pending', value: 'PENDING' },
-  { label: 'Refunded', value: 'REFUNDED' },
-  { label: 'Canceled', value: 'CANCELED' },
-];
+const FILTERS: (OrderStatus | undefined)[] = [undefined, 'FULFILLED', 'PENDING', 'REFUNDED', 'CANCELED'];
 
-const PAYMENT: Record<PaymentMethod, { label: string; icon: IconName; tint: string }> = {
-  CASH: { label: 'Cash', icon: 'money', tint: TINT.emerald },
-  CARD: { label: 'Card', icon: 'receipt', tint: TINT.indigo },
-  MOBILE_MONEY: { label: 'Mobile money', icon: 'phone', tint: TINT.violet },
-  BANK_TRANSFER: { label: 'Bank transfer', icon: 'branches', tint: TINT.sky },
+const PAYMENT: Record<PaymentMethod, { icon: IconName; tint: string }> = {
+  CASH: { icon: 'money', tint: TINT.emerald },
+  CARD: { icon: 'receipt', tint: TINT.indigo },
+  MOBILE_MONEY: { icon: 'phone', tint: TINT.violet },
+  BANK_TRANSFER: { icon: 'branches', tint: TINT.sky },
 };
 
 export default function OrdersScreen() {
   const theme = useTheme();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<OrderStatus | undefined>();
@@ -49,16 +46,17 @@ export default function OrdersScreen() {
   const filtered = Boolean(debouncedSearch || status);
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <TabScreen style={{ backgroundColor: theme.background }}>
       <FilterBar
         search={search}
         onSearch={setSearch}
-        placeholder="Order # or customer"
-        chips={FILTERS}
+        placeholder={t('orders.searchPlaceholder')}
+        chips={FILTERS.map((value) => ({ label: value ? t(`orderStatus.${value}`) : t('common.all'), value }))}
         selected={status}
         onSelect={setStatus}
       />
       <FlatList
+        contentInsetAdjustmentBehavior="automatic"
         data={orders}
         keyExtractor={(o) => o.id}
         keyboardShouldPersistTaps="handled"
@@ -67,9 +65,10 @@ export default function OrdersScreen() {
           flexGrow: 1,
           padding: Spacing.three,
           paddingTop: Spacing.one,
-          paddingBottom: BOTTOM_OFFSET,
+          paddingBottom: Spacing.three,
           gap: Spacing.two + 2,
         }}
+        ListHeaderComponent={<PendingSyncBanner kinds={['sale']} noun={[t('orders.pendingNoun', { count: 1 }), t('orders.pendingNoun', { count: 2 })]} />}
         renderItem={({ item }) => <OrderCard order={item} total={formatCurrency(item.total)} />}
         refreshControl={
           <RefreshControl
@@ -85,8 +84,8 @@ export default function OrdersScreen() {
             isLoading={query.isLoading}
             error={query.error}
             onRetry={query.refetch}
-            emptyTitle={filtered ? 'No matching orders' : 'No orders yet'}
-            emptyMessage={filtered ? 'Try a different search or filter.' : 'Sales you ring up on the Sell tab show up here.'}
+            emptyTitle={filtered ? t('orders.noMatching') : t('orders.noOrders')}
+            emptyMessage={filtered ? t('orders.tryDifferent') : t('orders.salesShowHere')}
           />
         }
         ListFooterComponent={
@@ -97,20 +96,21 @@ export default function OrdersScreen() {
           ) : undefined
         }
       />
-    </View>
+    </TabScreen>
   );
 }
 
 function OrderCard({ order, total }: { order: Order; total: string }) {
   const theme = useTheme();
+  const t = useT();
   const count = order.items.reduce((n, i) => n + i.quantity, 0);
   const pay = PAYMENT[order.paymentMethod];
   // The first line names the sale when there's no customer ("Milk +2 more").
   const first = order.items[0]?.name;
-  const title = order.customer?.name ?? 'Walk-in sale';
+  const title = order.customer?.name ?? t('orders.walkInSale');
   const detail = [
-    `${count} item${count === 1 ? '' : 's'}`,
-    first && !order.customer ? first + (order.items.length > 1 ? ` +${order.items.length - 1}` : '') : null,
+    t('common.items', { count }),
+    first && !order.customer ? first + (order.items.length > 1 ? ` ${t('orders.more', { count: order.items.length - 1 })}` : '') : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -146,7 +146,7 @@ function OrderCard({ order, total }: { order: Order; total: string }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.two }}>
         <OrderStatusBadge status={order.status} />
         <ThemedText type="caption" themeColor="textSecondary" style={{ flex: 1 }} numberOfLines={1}>
-          {order.orderNumber} · {pay.label} · {formatRelativeDay(order.createdAt)}
+          {order.orderNumber} · {t(`common.paymentMethods.${order.paymentMethod}`)} · {formatRelativeDay(order.createdAt, t)}
         </ThemedText>
         <Icon name="chevronRight" size={14} color={theme.textSecondary} />
       </View>

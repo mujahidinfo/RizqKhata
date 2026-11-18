@@ -18,6 +18,12 @@ type RequestOptions = {
   query?: Record<string, string | number | boolean | undefined | null>;
   /** Send the access token and retry once after refreshing on 401. Default true. */
   auth?: boolean;
+  /** Extra headers, e.g. `Idempotency-Key`. */
+  headers?: Record<string, string>;
+  /** Branch to act on instead of the active one (queued offline writes keep theirs). */
+  shopId?: string;
+  /** Give up after this long (ms) and fail like a dropped connection. */
+  timeoutMs?: number;
 };
 
 // ─── Token state ─────────────────────────────────────────────────────────────
@@ -50,6 +56,8 @@ let shopId: string | null = null;
 export function setActiveShopId(id: string | null) {
   shopId = id;
 }
+
+export const getActiveShopId = () => shopId;
 
 /**
  * Exchange the refresh token for a new pair. Refresh tokens are single-use on the
@@ -96,8 +104,13 @@ function buildUrl(path: string, query?: RequestOptions['query']) {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, query, auth = true } = options;
+  const { method = 'GET', body, query, auth = true, headers, timeoutMs } = options;
   const isFormData = body instanceof FormData;
+  const branch = options.shopId ?? shopId;
+  // AbortSignal.timeout() isn't in React Native's polyfill; do it by hand.
+  const controller = timeoutMs ? new AbortController() : undefined;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
+  const timeout = controller?.signal;
 
   let res: Response;
   try {
@@ -108,15 +121,34 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
         // FormData sets its own multipart boundary header.
         ...(body !== undefined && !isFormData && { 'Content-Type': 'application/json' }),
         ...(auth && accessToken && { Authorization: `Bearer ${accessToken}` }),
-        ...(auth && shopId && { 'X-Shop-Id': shopId }),
+        ...(auth && branch && { 'X-Shop-Id': branch }),
+        ...headers,
       },
       body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
+      signal: timeout,
     });
   } catch (cause) {
-    throw new ApiError(0, `Can't reach the server at ${API_URL}`, cause);
+    clearTimeout(timer);
+    if (timeout?.aborted) throw new ApiError(0, 'The server took too long to answer', cause);
+    // fetch also throws for requests it can't build (e.g. an unsupported body);
+    // only call it a connection problem when it actually is one.
+    const reason = cause instanceof Error ? cause.message : '';
+    const offline = !reason || /network request failed|network|timed out|offline/i.test(reason);
+    throw new ApiError(
+      0,
+      offline ? `Can't reach the server at ${API_URL}${reason ? ` (${reason})` : ''}` : `Request failed: ${reason}`,
+      cause,
+    );
   }
 
-  const text = await res.text();
+  let text: string;
+  try {
+    text = await res.text();
+  } catch (cause) {
+    throw new ApiError(0, 'The connection dropped while reading the answer', cause);
+  } finally {
+    clearTimeout(timer);
+  }
   const data = text ? safeJson(text) : null;
 
   if (!res.ok) {

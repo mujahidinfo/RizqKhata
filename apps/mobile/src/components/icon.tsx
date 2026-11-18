@@ -55,6 +55,25 @@ export const ICONS = {
   arrowUp: { ios: 'arrow.up.right', android: 'north_east' },
   arrowDown: { ios: 'arrow.down.left', android: 'south_west' },
   history: { ios: 'clock.arrow.circlepath', android: 'history' },
+  sun: { ios: 'sun.max.fill', android: 'light_mode' },
+  moon: { ios: 'moon.fill', android: 'dark_mode' },
+  // Sync status
+  cloudDone: { ios: 'checkmark.icloud', android: 'cloud_done' },
+  cloudOff: { ios: 'icloud.slash', android: 'cloud_off' },
+  cloudSync: { ios: 'arrow.triangle.2.circlepath.icloud', android: 'cloud_sync' },
+  cloudUpload: { ios: 'icloud.and.arrow.up', android: 'cloud_upload' },
+  cloudAlert: { ios: 'exclamationmark.icloud', android: 'sync_problem' },
+  // Customers & notes
+  customers: { ios: 'person.crop.rectangle.stack.fill', android: 'contacts' },
+  note: { ios: 'note.text', android: 'sticky_note_2' },
+  pinFill: { ios: 'pin.fill', android: 'push_pin' },
+  circle: { ios: 'circle', android: 'radio_button_unchecked' },
+  shared: { ios: 'person.2', android: 'group' },
+  // Service jobs
+  wrench: { ios: 'wrench.and.screwdriver.fill', android: 'build' },
+  whatsapp: { ios: 'message.fill', android: 'chat' },
+  device: { ios: 'iphone', android: 'smartphone' },
+  clock: { ios: 'clock', android: 'schedule' },
 } as const satisfies Record<string, { ios: SFSymbol; android: AndroidSymbol }>;
 
 export type IconName = keyof typeof ICONS;

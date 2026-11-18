@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { JwtAuthGuard, RolesGuard, TenantGuard } from './common/guards.js';
+import { IdempotencyInterceptor } from './common/idempotency.interceptor.js';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter.js';
 import { type Env, validateEnv } from './config/env.js';
 import { AnalyticsModule } from './modules/analytics/analytics.module.js';
@@ -19,6 +20,8 @@ import { ProductsModule } from './modules/products/products.module.js';
 import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
 import { UploadsModule } from './modules/uploads/uploads.module.js';
 import { MembersModule } from './modules/members/members.module.js';
+import { NotesModule } from './modules/notes/notes.module.js';
+import { JobsModule } from './modules/jobs/jobs.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
@@ -49,6 +52,8 @@ import { PrismaModule } from './prisma/prisma.module.js';
     FinanceModule,
     SuppliersModule,
     UploadsModule,
+    NotesModule,
+    JobsModule,
   ],
   controllers: [HealthController],
   providers: [
@@ -59,6 +64,8 @@ import { PrismaModule } from './prisma/prisma.module.js';
     { provide: APP_GUARD, useClass: TenantGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_FILTER, useClass: PrismaExceptionFilter },
+    // Safe retries for writes sent with an Idempotency-Key (mobile offline sync).
+    { provide: APP_INTERCEPTOR, useClass: IdempotencyInterceptor },
   ],
 })
 export class AppModule {}

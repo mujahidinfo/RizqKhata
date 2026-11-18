@@ -13,12 +13,9 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
 
-const METHODS: { value: PaymentMethod; label: string }[] = [
-  { value: 'CASH', label: 'Cash' },
-  { value: 'MOBILE_MONEY', label: 'bKash / Mobile' },
-  { value: 'BANK_TRANSFER', label: 'Bank' },
-];
+const METHODS: PaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'BANK_TRANSFER'];
 
 export default function SupplierPaymentScreen() {
   const { supplierId } = useLocalSearchParams<{ supplierId: string }>();
@@ -29,6 +26,7 @@ export default function SupplierPaymentScreen() {
 
 function PaymentForm({ supplier }: { supplier: SupplierDetail }) {
   const theme = useTheme();
+  const t = useT();
   const formatCurrency = useFormatCurrency();
   const pay = usePaySupplier();
   const due = Math.max(supplier.due, 0);
@@ -45,6 +43,7 @@ function PaymentForm({ supplier }: { supplier: SupplierDetail }) {
     try {
       await pay.mutateAsync({
         supplierId: supplier.id,
+        supplierName: supplier.name,
         amount: value,
         paymentMethod: method,
         note: note.trim() || undefined,
@@ -52,7 +51,7 @@ function PaymentForm({ supplier }: { supplier: SupplierDetail }) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.back();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not record the payment.');
+      setError(e instanceof Error ? e.message : t('supplierPayment.couldNotRecord'));
     }
   };
 
@@ -63,25 +62,34 @@ function PaymentForm({ supplier }: { supplier: SupplierDetail }) {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
           <ThemedText type="small" themeColor="textSecondary">
-            You owe {supplier.name}
+            {t('supplierPayment.youOwe', { name: supplier.name })}
           </ThemedText>
           <ThemedText type="title">{formatCurrency(due)}</ThemedText>
         </View>
-        <TextField label="Amount paid" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
+        <TextField label={t('supplierPayment.amountPaid')} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
         {due > 0 && (
           <ChipGroup>
-            <Chip label="Full amount" selected={value === due} onPress={() => setAmount(String(due))} />
+            <Chip label={t('supplierPayment.fullAmount')} selected={value === due} onPress={() => setAmount(String(due))} />
             <Chip
-              label="Half"
+              label={t('supplierPayment.half')}
               selected={value === Math.round(due / 2)}
               onPress={() => setAmount(String(Math.round(due / 2)))}
             />
           </ChipGroup>
         )}
-        <Segmented options={METHODS} value={method} onChange={setMethod} />
-        <TextField label="Note (optional)" value={note} onChangeText={setNote} placeholder="e.g. bKash TrxID" />
+        <Segmented
+          options={METHODS.map((value) => ({ value, label: t(`common.paymentMethods.${value}`) }))}
+          value={method}
+          onChange={setMethod}
+        />
+        <TextField
+          label={t('supplierPayment.note')}
+          value={note}
+          onChangeText={setNote}
+          placeholder={t('supplierPayment.notePlaceholder')}
+        />
         <ThemedText type="caption" themeColor="textSecondary">
-          This payment is also recorded in your Expenses.
+          {t('supplierPayment.alsoExpense')}
         </ThemedText>
         {valid && value > due && (
           <ThemedText type="small" themeColor="warning">
@@ -94,7 +102,7 @@ function PaymentForm({ supplier }: { supplier: SupplierDetail }) {
           </ThemedText>
         )}
         <Button
-          title={valid ? `Pay ${formatCurrency(value)}` : 'Pay'}
+          title={valid ? t('supplierPayment.payAmount', { amount: formatCurrency(value) }) : t('supplierPayment.pay')}
           onPress={submit}
           loading={pay.isPending}
           disabled={!valid}

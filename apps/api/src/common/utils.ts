@@ -11,6 +11,7 @@ function documentNumber(prefix: string): string {
 
 export const generateOrderNumber = () => documentNumber('ORD');
 export const generatePurchaseNumber = () => documentNumber('PUR');
+export const generateJobNumber = () => documentNumber('JOB');
 
 // ─── Shared zod pieces ───────────────────────────────────────────────────────
 
@@ -28,6 +29,18 @@ export const paymentMethodSchema = z.enum([
 export const isoDate = z
   .union([z.iso.date(), z.iso.datetime({ offset: true })])
   .transform((s) => new Date(s));
+
+/**
+ * When a record really happened. The mobile app sends it for writes saved
+ * offline and synced later, so reports put them on the right day.
+ */
+export const recordedAtSchema = isoDate.optional();
+
+/** `recordedAt` if given and not in the future (clock skew), else now. */
+export function recordedAtOrNow(recordedAt?: Date): Date {
+  const now = new Date();
+  return recordedAt && recordedAt.getTime() <= now.getTime() ? recordedAt : now;
+}
 
 /** Query-string pagination (values arrive as strings). */
 export const paginationQuery = (defaultPageSize = 20) =>
