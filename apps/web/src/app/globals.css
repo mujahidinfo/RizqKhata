@@ -1,0 +1,258 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --color-background: hsl(var(--background));
+    --color-foreground: hsl(var(--foreground));
+    --color-card: hsl(var(--card));
+    --color-card-foreground: hsl(var(--card-foreground));
+    --color-popover: hsl(var(--popover));
+    --color-popover-foreground: hsl(var(--popover-foreground));
+    --color-primary: hsl(var(--primary));
+    --color-primary-foreground: hsl(var(--primary-foreground));
+    --color-secondary: hsl(var(--secondary));
+    --color-secondary-foreground: hsl(var(--secondary-foreground));
+    --color-muted: hsl(var(--muted));
+    --color-muted-foreground: hsl(var(--muted-foreground));
+    --color-accent: hsl(var(--accent));
+    --color-accent-foreground: hsl(var(--accent-foreground));
+    --color-destructive: hsl(var(--destructive));
+    --color-destructive-foreground: hsl(var(--destructive-foreground));
+    --color-border: hsl(var(--border));
+    --color-input: hsl(var(--input));
+    --color-ring: hsl(var(--ring));
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+    /* Rizq Khata brand green (from the logo, #17694C = 700). Used wherever the
+       UI used to hard-code indigo: bg-brand-600, text-brand-700, ring-brand-500… */
+    --color-brand-50: #EDF7F2;
+    --color-brand-100: #D3EDE0;
+    --color-brand-200: #A8DBC2;
+    --color-brand-300: #74C29F;
+    --color-brand-400: #3FA57A;
+    --color-brand-500: #22895F;
+    --color-brand-600: #1A7A57;
+    --color-brand-700: #17694C;
+    --color-brand-800: #13553E;
+    --color-brand-900: #0F4332;
+    --animate-accordion-down: accordion-down 0.2s ease-out;
+    --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+:root {
+    --background: 220 16% 96%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 158.8 64.1% 25.1%; /* #17694C logo green */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 94%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 158.8 64.1% 25.1%;
+    --radius: 0.75rem;
+}
+
+.dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 157.2 64.3% 32.9%; /* #1E8A61, lifted to read on dark */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 157.2 64.3% 32.9%;
+}
+
+@layer base {
+    * {
+        @apply border-border outline-ring/50;
+    }
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings:
+            "rlig" 1,
+            "calt" 1;
+        /* Tiro Bangla has only a 400 weight; allow synthetic bold so the
+           heading hierarchy survives in Bangla. */
+        font-synthesis: weight;
+    }
+    ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: hsl(220 13% 86%);
+        border-radius: 99px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: hsl(220 9% 72%);
+    }
+
+    /*
+     * iOS Safari auto-zooms the viewport when a focused form control has a
+     * computed font-size below 16px. Most fields here are `text-sm` (14px), so
+     * focusing them yanked the page in and out of zoom on every tap.
+     *
+     * The fix is to raise the font to 16px on touch devices rather than to set
+     * `maximum-scale=1` / `user-scalable=no` in the viewport meta — disabling
+     * pinch-zoom would silently break zooming for low-vision users (WCAG 1.4.4).
+     * Desktop keeps the tighter 14px type.
+     */
+    @media (pointer: coarse) {
+        input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+        select,
+        textarea {
+            font-size: 16px;
+            /* Keeps the visual rhythm from stretching now that text is larger. */
+            line-height: 1.25;
+        }
+    }
+}
+
+/* ─── Landing (public "/") ────────────────────────────────────────────────────
+   Logo green owns whole colour fields; slate carries the text. Light by design:
+   the visitor is a shop owner on a phone in a bright shop. Nothing here is used
+   by the dashboard. */
+
+.rk {
+    --rk-green: #17694c;
+    --rk-green-deep: #0f4332;
+    --rk-green-ink: #0b3527;
+    --rk-mint: #edf7f2;
+    --rk-mint-2: #d3ede0;
+    --rk-leaf: #74c29f;
+    --rk-slate: #3e4651;
+    --rk-ink: #1d232b;
+    --rk-muted: #5b6470;
+    --rk-line: #e3e7e5;
+    --rk-ground: #ffffff;
+    --rk-ground-2: #f5f7f6;
+    --rk-amber: #b7791f;
+    --rk-shadow: 0 1px 2px rgba(15, 67, 50, 0.06), 0 12px 32px -12px rgba(15, 67, 50, 0.22);
+    --rk-shadow-lg: 0 2px 4px rgba(15, 67, 50, 0.06), 0 32px 64px -24px rgba(15, 67, 50, 0.35);
+
+    background: var(--rk-ground);
+    color: var(--rk-ink);
+    font-family: var(--font-inter), var(--font-display), sans-serif;
+}
+
+.rk :lang(bn),
+.rk[lang="bn"],
+html[lang="bn"] .rk {
+    font-family: var(--font-display), var(--font-inter), sans-serif;
+}
+
+.rk ::selection {
+    background: var(--rk-mint-2);
+    color: var(--rk-green-ink);
+}
+
+.rk-display {
+    font-family: var(--font-display), var(--font-inter), sans-serif;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+}
+
+html[lang="bn"] .rk-display {
+    letter-spacing: -0.005em;
+}
+
+.rk-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+.rk a:focus-visible,
+.rk button:focus-visible {
+    outline: 2px solid var(--rk-green);
+    outline-offset: 3px;
+    border-radius: 10px;
+}
+
+.rk-on-green a:focus-visible,
+.rk-on-green button:focus-visible {
+    outline-color: #ffffff;
+}
+
+/* Values settle in place: they never fade in from nothing. */
+@keyframes rk-settle {
+    0% {
+        background-color: var(--rk-mint-2);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.rk-settle {
+    animation: rk-settle 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes rk-rise {
+    from {
+        transform: translateY(6px);
+    }
+    to {
+        transform: none;
+    }
+}
+
+.rk-rise {
+    animation: rk-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rk-settle,
+    .rk-rise {
+        animation: none;
+    }
+    .rk * {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@keyframes accordion-down {
+    from {
+        height: 0;
+    }
+    to {
+        height: var(--radix-accordion-content-height);
+    }
+}
+
+@keyframes accordion-up {
+    from {
+        height: var(--radix-accordion-content-height);
+    }
+    to {
+        height: 0;
+    }
+}

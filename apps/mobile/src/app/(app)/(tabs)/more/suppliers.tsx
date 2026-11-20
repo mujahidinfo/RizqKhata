@@ -1,0 +1,150 @@
+import { router } from 'expo-router';
+import { useState } from 'react';
+import { FlatList, Pressable, RefreshControl, View } from 'react-native';
+
+import { useSuppliers } from '@/api/queries';
+import type { Supplier } from '@/api/types';
+import { Avatar } from '@/components/avatar';
+import { Badge } from '@/components/badge';
+import { Fab, FAB_CLEARANCE } from '@/components/fab';
+import { FilterBar } from '@/components/filter-bar';
+import { TabScreen } from '@/components/safe-area';
+import { IconTile, TINT } from '@/components/icon-tile';
+import { QueryState } from '@/components/query-state';
+import { ThemedText } from '@/components/themed-text';
+import { Radius, Spacing } from '@/constants/theme';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { useTheme } from '@/hooks/use-theme';
+import { useFormatCurrency } from '@/lib/format';
+import { useT } from '@/lib/i18n';
+
+type Filter = 'due';
+
+/** Who you buy from, with what you owe each of them front and centre. */
+export default function SuppliersScreen() {
+  const theme = useTheme();
+  const t = useT();
+  const formatCurrency = useFormatCurrency();
+  const query = useSuppliers();
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<Filter | undefined>();
+  const needle = useDebouncedValue(search.trim().toLowerCase(), 150);
+
+  const all = query.data ?? [];
+  const owed = all.filter((s) => s.due > 0);
+  const totalDue = owed.reduce((sum, s) => sum + s.due, 0);
+  const shown = all
+    .filter((s) => (filter === 'due' ? s.due > 0 : true))
+    .filter((s) => !needle || s.name.toLowerCase().includes(needle) || (s.phone ?? '').includes(needle))
+    // Biggest debt first, then alphabetical.
+    .sort((a, b) => b.due - a.due || a.name.localeCompare(b.name));
+
+  return (
+    <TabScreen style={{ backgroundColor: theme.background }}>
+      <FilterBar
+        search={search}
+        onSearch={setSearch}
+        placeholder={t('suppliers.searchPlaceholder')}
+        chips={[
+          { label: t('common.all') },
+          { label: owed.length ? t('suppliers.youOweCount', { count: owed.length }) : t('suppliers.youOwe'), value: 'due' as Filter },
+        ]}
+        selected={filter}
+        onSelect={setFilter}
+      />
+      <FlatList
+        contentInsetAdjustmentBehavior="automatic"
+        data={shown}
+        keyExtractor={(s) => s.id}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1, padding: Spacing.three, paddingTop: Spacing.one, paddingBottom: FAB_CLEARANCE, gap: Spacing.two + 2 }}
+        refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => void query.refetch()} tintColor={theme.primary} />}
+        ListHeaderComponent={
+          totalDue > 0 && !needle && !filter ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: Spacing.three,
+                padding: Spacing.three,
+                marginBottom: Spacing.one,
+                borderRadius: Radius.lg + 4,
+                borderCurve: 'continuous',
+                backgroundColor: `${TINT.rose}14`,
+              }}>
+              <IconTile name="wallet" tint={TINT.rose} size={44} />
+              <View style={{ flex: 1 }}>
+                <ThemedText type="caption" themeColor="textSecondary">
+                  {t('suppliers.owedTotal')}
+                </ThemedText>
+                <ThemedText style={{ fontSize: 26, lineHeight: 32, fontWeight: 700, fontVariant: ['tabular-nums'] }} themeColor="danger">
+                  {formatCurrency(totalDue)}
+                </ThemedText>
+              </View>
+              <ThemedText type="caption" themeColor="textSecondary">
+                {t('suppliers.suppliersCount', { count: owed.length })}
+              </ThemedText>
+            </View>
+          ) : undefined
+        }
+        renderItem={({ item }) => <SupplierCard supplier={item} due={formatCurrency(item.due)} bought={formatCurrency(item.totalPurchased)} />}
+        ListEmptyComponent={
+          <QueryState
+            isLoading={query.isLoading}
+            error={query.error}
+            onRetry={query.refetch}
+            emptyTitle={needle || filter ? t('suppliers.noMatching') : t('suppliers.noSuppliers')}
+            emptyMessage={needle || filter ? t('suppliers.tryDifferent') : t('suppliers.emptyHint')}
+          />
+        }
+      />
+      <Fab label={t('suppliers.addSupplier')} onPress={() => router.push('/supplier-form')} />
+    </TabScreen>
+  );
+}
+
+function SupplierCard({ supplier, due, bought }: { supplier: Supplier; due: string; bought: string }) {
+  const theme = useTheme();
+  const t = useT();
+  const owed = supplier.due > 0;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={owed ? t('suppliers.a11yOwe', { name: supplier.name, amount: due }) : t('suppliers.a11ySettled', { name: supplier.name })}
+      onPress={() => router.push({ pathname: '/more/supplier/[id]', params: { id: supplier.id } })}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.three,
+        padding: Spacing.three,
+        borderRadius: Radius.lg + 4,
+        borderCurve: 'continuous',
+        backgroundColor: theme.backgroundElement,
+        boxShadow: '0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.03)',
+        transform: [{ scale: pressed ? 0.98 : 1 }],
+      })}>
+      <Avatar name={supplier.name} size={46} />
+      <View style={{ flex: 1, gap: 3 }}>
+        <ThemedText type="smallBold" style={{ fontSize: 16 }} numberOfLines={1}>
+          {supplier.name}
+        </ThemedText>
+        <ThemedText type="caption" themeColor="textSecondary" numberOfLines={1}>
+          {supplier.phone ? `${supplier.phone} · ` : ''}
+          {supplier.totalPurchased > 0 ? t('suppliers.bought', { amount: bought }) : t('suppliers.noDeliveries')}
+        </ThemedText>
+      </View>
+      <View style={{ alignItems: 'flex-end', gap: 4 }}>
+        {owed ? (
+          <>
+            <ThemedText type="smallBold" themeColor="danger" style={{ fontSize: 16, fontVariant: ['tabular-nums'] }}>
+              {due}
+            </ThemedText>
+            <Badge label={t('suppliers.due')} tone="danger" />
+          </>
+        ) : (
+          <Badge label={t('suppliers.settled')} tone="success" />
+        )}
+      </View>
+    </Pressable>
+  );
+}
