@@ -140,6 +140,10 @@ export const bn: Dictionary = {
     keep: 'রাখুন',
     empty: 'কার্ট খালি',
     keepSelling: 'বিক্রি চালিয়ে যান',
+    editPriceA11y: '{name}-এর দাম বদলান, এখন {price}',
+    priceLabel: '{name}-এর বিক্রয়মূল্য',
+    resetPrice: '{price}-এ ফেরান',
+    belowCost: 'কেনা দামের নিচে ({cost})',
   },
   checkout: {
     couldNotComplete: 'বিক্রি সম্পন্ন করা গেল না।',

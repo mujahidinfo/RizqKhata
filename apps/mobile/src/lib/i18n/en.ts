@@ -141,6 +141,10 @@ export const en = {
     keep: 'Keep',
     empty: 'The cart is empty',
     keepSelling: 'Keep selling',
+    editPriceA11y: 'Change the price of {name}, now {price}',
+    priceLabel: 'Sale price for {name}',
+    resetPrice: 'Reset to {price}',
+    belowCost: 'Below cost ({cost})',
   },
   checkout: {
     couldNotComplete: 'Could not complete the sale.',
