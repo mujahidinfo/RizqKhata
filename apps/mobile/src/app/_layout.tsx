@@ -10,6 +10,7 @@ import { restoreColorScheme } from '@/lib/appearance';
 import { LanguageProvider } from '@/lib/i18n';
 import { installNetworkListeners } from '@/lib/network';
 import { persistOptions, queryClient } from '@/lib/query-client';
+import '@/lib/web-styles';
 import { SessionProvider, useSession } from '@/lib/session';
 
 SplashScreen.preventAutoHideAsync();
@@ -32,7 +33,9 @@ export default function RootLayout() {
                 ...base.colors,
                 primary: colors.primary,
                 background: colors.background,
-                card: colors.backgroundElement,
+                // Web: headers sit on the page colour, so in a wide window there's no
+                // raised bar ending in hard corners inside the centred column.
+                card: process.env.EXPO_OS === 'web' ? colors.background : colors.backgroundElement,
                 text: colors.text,
                 border: colors.border,
               },

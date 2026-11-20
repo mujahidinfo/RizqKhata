@@ -38,6 +38,13 @@ export const Colors = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+/**
+ * Web text: the self-hosted Bangla face (lib/web-styles.web.ts, Bengali characters
+ * only) first, then the system UI font for everything else.
+ */
+export const WebFontStack =
+  '"RK Bangla", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans Bengali", sans-serif';
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
@@ -55,11 +62,13 @@ export const Fonts = Platform.select({
     rounded: 'normal',
     mono: 'monospace',
   },
+  // Previously pointed at CSS variables nothing defined, so web text fell back
+  // to browser defaults.
   web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
+    sans: WebFontStack,
+    serif: 'ui-serif, Georgia, serif',
+    rounded: WebFontStack,
+    mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   },
 });
 

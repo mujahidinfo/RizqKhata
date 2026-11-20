@@ -30,3 +30,11 @@ export function followSystemColorScheme() {
   Appearance.setColorScheme?.('unspecified');
   void secureStorage.remove(KEY);
 }
+
+/*
+ * The web build keeps its own override (appearance.web.ts) and its
+ * useColorScheme() reads it through these two. Natively the OS holds the
+ * choice, so there is nothing to subscribe to.
+ */
+export const subscribeColorScheme = (_listener: () => void) => () => {};
+export const getColorSchemeOverride = (): 'light' | 'dark' | null => null;

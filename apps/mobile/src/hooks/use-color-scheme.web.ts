@@ -1,19 +1,23 @@
 import { useSyncExternalStore } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
 
-const noopSubscribe = () => () => {};
+import { getColorSchemeOverride, subscribeColorScheme } from '@/lib/appearance';
 
 /**
- * To support static rendering, the server snapshot is always 'light'; the real
- * scheme is used once hydrated on the client.
+ * The browser build's colour scheme: the light/dark choice from the theme
+ * toggle (lib/appearance.web.ts) when there is one, otherwise the system's.
+ * The server snapshot is 'light' so static rendering stays stable.
  */
 export function useColorScheme() {
-  const hasHydrated = useSyncExternalStore(
+  const system = useRNColorScheme();
+  const override = useSyncExternalStore(subscribeColorScheme, getColorSchemeOverride, () => null);
+  const hydrated = useSyncExternalStore(
     noopSubscribe,
     () => true,
     () => false,
   );
-  const colorScheme = useRNColorScheme();
-
-  return hasHydrated ? colorScheme : 'light';
+  if (!hydrated) return 'light';
+  return override ?? system;
 }
+
+const noopSubscribe = () => () => {};

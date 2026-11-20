@@ -3,6 +3,7 @@ import type { Stack } from 'expo-router';
 
 import { ProfileButton } from '@/components/profile-button';
 import { ShopTitle } from '@/components/shop-title';
+import { Spacing } from '@/constants/theme';
 
 type ScreenOptions = NonNullable<ComponentProps<typeof Stack.Screen>['options']>;
 
@@ -26,4 +27,10 @@ export const tabHeaderOptions: ScreenOptions =
         headerTitle: '',
         headerLeft: () => <ShopTitle />,
         headerRight: () => <ProfileButton />,
+        // Web: the header gives its custom items no inset, so the shop tile sat on
+        // the left edge and the avatar was clipped on the right.
+        ...(process.env.EXPO_OS === 'web' && {
+          headerLeftContainerStyle: { paddingLeft: Spacing.three },
+          headerRightContainerStyle: { paddingRight: Spacing.three },
+        }),
       };

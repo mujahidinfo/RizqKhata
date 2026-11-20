@@ -15,6 +15,9 @@ export type ThemedTextProps = TextProps & {
  */
 const TALL_SCRIPT = /[\u0600-\u06FF\u0900-\u0DFF]/;
 const LATIN_MIN_RATIO = 1.25;
+// Web only: Bangla in the self-hosted Noto Sans Bengali, Latin in the system font
+// (see WebFontStack). Native keeps the platform fonts.
+const WEB_FONT = Platform.OS === 'web' ? { fontFamily: Fonts.sans } : null;
 const TALL_MIN_RATIO = 1.5;
 
 function textOf(node: ReactNode): string {
@@ -25,7 +28,7 @@ function textOf(node: ReactNode): string {
 
 export function ThemedText({ style, type = 'default', themeColor, children, ...rest }: ThemedTextProps) {
   const theme = useTheme();
-  const base = [{ color: theme[themeColor ?? 'text'] }, styles[type], style];
+  const base = [{ color: theme[themeColor ?? 'text'] }, WEB_FONT, styles[type], style];
 
   // Keep the line tall enough for the glyphs actually shown, so a bigger
   // fontSize override or Bengali text is never cut off at the top.
