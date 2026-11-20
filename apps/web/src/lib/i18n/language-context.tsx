@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  type ReactNode,
-} from "react";
-import { trpc } from "@/lib/trpc/client";
+import { createContext, useContext, useMemo } from "react";
 import {
   translations,
   DEFAULT_LANGUAGE,
@@ -28,25 +21,6 @@ export type TranslationKey = DotPaths<TranslationSchema>;
 type Vars = Record<string, string | number>;
 
 export const LanguageContext = createContext<Language>(DEFAULT_LANGUAGE);
-
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const { data: shop } = trpc.shop.get.useQuery();
-  const language: Language =
-    shop?.language === "bn" || shop?.language === "en"
-      ? shop.language
-      : DEFAULT_LANGUAGE;
-
-  // Keep the document language in sync for accessibility / font fallback.
-  useEffect(() => {
-    document.documentElement.lang = language;
-  }, [language]);
-
-  return (
-    <LanguageContext.Provider value={language}>
-      {children}
-    </LanguageContext.Provider>
-  );
-}
 
 export function useLanguage() {
   return useContext(LanguageContext);

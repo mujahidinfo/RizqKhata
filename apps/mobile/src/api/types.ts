@@ -36,7 +36,8 @@ export type AuthResponse = {
   tokenType: 'Bearer';
   accessToken: string;
   accessTokenExpiresAt: string;
-  refreshToken: string;
+  /** Absent for the web build: there the API keeps it in an httpOnly cookie. */
+  refreshToken?: string;
   refreshTokenExpiresAt: string;
   user: AuthUser;
 };

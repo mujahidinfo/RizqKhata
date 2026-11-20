@@ -2,8 +2,8 @@
 
 A multi-tenant SaaS point of sale and business manager for small shops in Bangladesh (works anywhere). One account can own many businesses; a business has many branches; each branch has its own stock, sales and spending. Bangla is the default language, English is one tap away.
 
-- **Mobile app** (Expo) — the day-to-day tool on iOS and Android: sell by barcode, run repair jobs, receive stock, track money out. Works offline and syncs when the connection returns. The same code also builds for the web.
-- **Web** (Next.js) — the public site (landing, about, privacy, terms) and the current admin dashboard, served through the REST API.
+- **The app** (Expo) — one codebase for iOS, Android and the web (`app.<domain>`): sell by barcode, run repair jobs, receive stock, track money out. Works offline and syncs when the connection returns.
+- **Public site** (Next.js) — landing, about, privacy and terms. "Start free" opens the app.
 - **REST API** (NestJS) — the single backend every app talks to; the only thing that touches the database.
 
 > Formerly **GenPOS**: package names (`@genpos/*`), cookies and the iOS bundle id still use `genpos`.
@@ -48,7 +48,7 @@ pnpm workspaces. Run all commands from the repo root.
 ```
 apps/
   api/        # @genpos/api    — NestJS 12 multi-tenant REST API + JWT/Google auth (localhost:4000, Swagger at /api/docs)
-  web/        # @genpos/web    — Next.js 16: public pages + admin dashboard; tRPC is a thin backend-for-frontend over the API
+  web/        # @genpos/web    — Next.js 16 public site (static pages, no API)
   mobile/     # @genpos/mobile — Expo SDK 58 app for iOS, Android and web
 packages/
   db/         # @genpos/db     — Prisma schema, migrations, seed, re-exported client
@@ -59,11 +59,11 @@ packages/
 | API | NestJS 12 (native ESM), zod (`nestjs-zod`), Swagger, JWT + rotating refresh tokens, idempotent writes |
 | Database | PostgreSQL via Prisma 6 |
 | Mobile | Expo SDK 58, React Native 0.88, Expo Router (NativeTabs), TanStack Query (persisted to SQLite), expo-camera |
-| Web | Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/ui, tRPC v11 |
+| Public site | Next.js 16 (App Router, static), React 19, Tailwind CSS v4 |
 | Language / tooling | TypeScript 6, pnpm |
 
 - Import Prisma types/client from `@genpos/db`, never `@prisma/client` directly in apps.
-- Only `apps/api` talks to the database; the web app imports `@genpos/db` for types only.
+- Only `apps/api` talks to the database. The public site doesn't call the API.
 
 More detail: [`apps/api/README.md`](apps/api/README.md) (endpoints, tenancy, roles), [`apps/mobile/README.md`](apps/mobile/README.md) (screens and flows) and [`CLAUDE.md`](CLAUDE.md) (conventions).
 
@@ -76,19 +76,20 @@ pnpm install
 
 cp packages/db/.env.example packages/db/.env   # DATABASE_URL (Prisma CLI)
 cp apps/api/.env.example apps/api/.env         # DATABASE_URL, JWT_SECRET, …
-cp apps/web/.env.example apps/web/.env         # API_URL
+cp apps/web/.env.example apps/web/.env         # public URLs for the site
+cp apps/mobile/.env.example apps/mobile/.env   # optional: EXPO_PUBLIC_API_URL
 
 pnpm db:deploy     # apply the committed migrations
 pnpm db:seed       # optional: demo business with sample data
-pnpm dev           # web (localhost:3000) + api (localhost:4000)
-pnpm dev:mobile    # Expo / Metro (the api must be running)
+pnpm dev           # public site (localhost:3000) + api (localhost:4000)
+pnpm dev:mobile    # the app: Expo / Metro (the api must be running)
 ```
 
 On a fresh database use `pnpm db:deploy` (not `db:push`) so the data backfills in the migrations run.
 
 The mobile app finds the API on the machine running Metro, so a phone on the same Wi-Fi or an emulator works without config.
 
-**The app in a browser:** `pnpm --filter @genpos/mobile web` (or press `w` in Metro). Add that origin (e.g. `http://localhost:8081`) to `CORS_ORIGINS` in `apps/api/.env` and restart the API, or sign-in fails with "Failed to fetch". The web build is a single-page app (`web.output: "single"`); `metro.config.js` serves SQLite's `.wasm` and the `Cross-Origin-*` headers it needs, and a production host must send the same two headers.
+**The app in a browser (development):** `pnpm --filter @genpos/mobile web` (or press `w` in Metro). Add that origin (e.g. `http://localhost:8081`) to `CORS_ORIGINS` in `apps/api/.env` and restart the API, or sign-in fails with "Failed to fetch". The web build is a single-page app (`web.output: "single"`); `metro.config.js` serves SQLite's `.wasm` and the `Cross-Origin-*` headers it needs, and a production host must send the same two headers.
 
 **Windows:** stop the API before `pnpm db:generate` (or `pnpm install`) — a running API locks Prisma's engine file and `prisma generate` fails with `EPERM`.
 
@@ -103,13 +104,14 @@ The mobile app finds the API on the machine running Metro, so a phone on the sam
 ## Commands
 
 ```bash
-pnpm dev          # web + api in parallel
-pnpm dev:web      # web only (needs the api running)
+pnpm dev          # public site + api in parallel
+pnpm dev:web      # public site only
 pnpm dev:api      # api only
 pnpm dev:mobile   # Expo / Metro (needs the api running)
-pnpm build        # build api + web
+pnpm build        # build api + public site
 pnpm lint         # lint api + mobile
-pnpm typecheck    # typecheck the web app
+pnpm typecheck    # typecheck the public site
+pnpm --filter @genpos/mobile export:web   # the app's web build → apps/mobile/dist
 
 pnpm db:migrate   # prisma migrate dev (creates a migration file)
 pnpm db:deploy    # prisma migrate deploy (apply committed migrations)
@@ -125,9 +127,9 @@ Mobile checks (inside `apps/mobile`): `npx tsc --noEmit`, `npx expo lint`, `npx 
 
 | File | Variables |
 |---|---|
-| `apps/api/.env` | `DATABASE_URL`, `JWT_SECRET` (32+ chars), `JWT_ACCESS_TTL`, `REFRESH_TOKEN_TTL_DAYS`, `PORT`, `CORS_ORIGINS` (every browser origin: the web app and, for the app in a browser, its Expo web origin), optional `GOOGLE_CLIENT_IDS` (enables Google sign-in), optional `UPLOADTHING_TOKEN` (enables photo uploads) |
+| `apps/api/.env` | `NODE_ENV`, `DATABASE_URL`, `JWT_SECRET` (32+ chars), `JWT_ACCESS_TTL`, `REFRESH_TOKEN_TTL_DAYS`, `PORT`, `CORS_ORIGINS` (the app's web origin, e.g. `https://app.rizqkhata.com`), `TRUST_PROXY` (1 behind Coolify), optional `GOOGLE_CLIENT_IDS` (enables Google sign-in), optional `UPLOADTHING_TOKEN` (enables photo uploads). In production the API refuses to start with the example `JWT_SECRET` or a localhost `CORS_ORIGINS` |
 | `packages/db/.env` | `DATABASE_URL` (used by the Prisma CLI) |
-| `apps/web/.env` | `API_URL` (e.g. `http://localhost:4000/api/v1`), `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_APP_URL`, optional `NEXT_PUBLIC_CONTACT_EMAIL` (shown on the privacy and terms pages) |
+| `apps/web/.env` | `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_SITE_URL` (this site), `NEXT_PUBLIC_APP_URL` (the app that Start free / Sign in open), optional `NEXT_PUBLIC_CONTACT_EMAIL` (privacy and terms pages). All public, baked in at build time |
 | `apps/mobile/.env` | optional `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`, `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` — never put server secrets here. Release builds take `EXPO_PUBLIC_API_URL` (https) from EAS environment variables |
 
 ## Roles
@@ -139,7 +141,7 @@ Mobile checks (inside `apps/mobile`): `npx tsc --noEmit`, `npx expo lint`, `npx 
 | `INVENTORY_MANAGER` | Sell, add products, receive stock, manage suppliers |
 | `CASHIER` | Sell and see orders |
 
-Money screens (expenses, bills, salaries, supplier payments) and refunds are for owners and managers. The web dashboard shows owners and managers as `ADMIN`; the API enforces authorization.
+Money screens (expenses, bills, salaries, supplier payments) and refunds are for owners and managers. The API enforces authorization.
 
 ## Data model (key models)
 
@@ -157,13 +159,20 @@ Money screens (expenses, bills, salaries, supplier payments) and refunds are for
 | `Employee` | Payroll entry (monthly salary, pay day), optionally linked to a staff login |
 | `Note` | Notes for later, private unless shared with the business |
 | `IdempotencyKey` | Stored result of a write sent with an `Idempotency-Key` header (offline sync replays) |
-| `Budget` | Spending limits (used by the web dashboard) |
+| `Budget` | Spending limits (API only for now) |
 
 Schema source of truth: `packages/db/prisma/schema.prisma`.
 
-## Roadmap
+## Deployment
 
-The Expo app is becoming the only app for iOS, Android **and** the web, and the Next.js admin dashboard will be retired so features ship once. `apps/web` stays as the public site. Before the switch, the app gets finance reports with print, a wide-screen layout for desktop, and secure web token storage.
+| Piece | How | Image / build |
+|---|---|---|
+| API | Coolify, Dockerfile | `apps/api/Dockerfile` — runs `prisma migrate deploy` on start, health check at `/api/v1/health` |
+| Public site | Coolify, Dockerfile | `apps/web/Dockerfile` — Next standalone; build args `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_APP_URL` |
+| App on the web | Coolify, Dockerfile | `apps/mobile/Dockerfile.web` — Expo export on nginx (COOP/COEP headers); build arg `EXPO_PUBLIC_API_URL` |
+| iOS / Android | EAS Build + Submit | `eas build --profile production`, `eas submit --profile production` |
+
+All Dockerfiles build from the repo root. **Security notes:** in a browser the refresh token lives in an httpOnly cookie (the app sends `X-Auth-Transport: cookie`); the API sends security headers, trusts `TRUST_PROXY` proxies for rate limits, and hides Swagger in production. No client shows the API address or demo credentials.
 
 ## License
 

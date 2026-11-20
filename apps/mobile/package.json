@@ -54,7 +54,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "eas-build-pre-install": "node scripts/check-release-env.mjs"
+    "eas-build-pre-install": "node scripts/check-release-env.mjs",
+    "export:web": "expo export -p web"
   },
   "private": true
 }

@@ -8,7 +8,6 @@ import { HeaderButton } from '@/components/header-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ApiError } from '@/lib/api-client';
-import { API_URL } from '@/lib/config';
 import { useSession } from '@/lib/session';
 import { useT } from '@/lib/i18n';
 
@@ -53,11 +52,6 @@ export default function SignInScreen() {
             <ThemedText themeColor="textSecondary">{t('auth.newHere')}</ThemedText>
             <HeaderButton title={t('auth.createAccount')} onPress={() => router.replace('/sign-up')} />
           </View>
-          {__DEV__ && (
-            <ThemedText type="caption" themeColor="textSecondary" style={styles.center}>
-              API: {API_URL}
-            </ThemedText>
-          )}
         </View>
       }>
       <GoogleButton onError={setError} />
@@ -100,8 +94,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
-  },
-  center: {
-    textAlign: 'center',
   },
 });

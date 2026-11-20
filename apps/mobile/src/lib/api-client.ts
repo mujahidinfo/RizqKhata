@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import type { AuthResponse } from '@/api/types';
 import { API_URL } from '@/lib/config';
 
@@ -27,8 +29,14 @@ type RequestOptions = {
 };
 
 // ─── Token state ─────────────────────────────────────────────────────────────
-// Access token lives only in memory. The refresh token is persisted by the
-// session layer, which registers itself via `configureAuth`.
+// Access token lives only in memory. On iOS/Android the refresh token is kept
+// in the device keychain by the session layer. In a browser, scripts on the page
+// can read any storage, so there the API keeps the refresh token in an httpOnly
+// cookie (opt-in header below) and the app only remembers the marker
+// COOKIE_SESSION meaning "a session cookie exists".
+
+const COOKIE_AUTH = Platform.OS === 'web';
+export const COOKIE_SESSION = 'cookie';
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -43,10 +51,13 @@ export function configureAuth(next: typeof handlers) {
   handlers = next;
 }
 
-export function setTokens(tokens: { accessToken: string | null; refreshToken: string | null }) {
+export function setTokens(tokens: { accessToken: string | null; refreshToken?: string | null }) {
   accessToken = tokens.accessToken;
-  refreshToken = tokens.refreshToken;
+  refreshToken = tokens.refreshToken ?? (tokens.accessToken && COOKIE_AUTH ? COOKIE_SESSION : null);
 }
+
+/** Body for /auth/refresh and /auth/logout: empty when the cookie carries the token. */
+export const refreshBody = (token: string) => (token === COOKIE_SESSION ? {} : { refreshToken: token });
 
 export const getRefreshToken = () => refreshToken;
 
@@ -73,7 +84,7 @@ export function refreshSession(): Promise<AuthResponse | null> {
     try {
       const res = await request<AuthResponse>('/auth/refresh', {
         method: 'POST',
-        body: { refreshToken },
+        body: refreshBody(refreshToken!),
         auth: false,
       });
       setTokens(res);
@@ -112,11 +123,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
   const timeout = controller?.signal;
 
+  // Browser: auth routes use the httpOnly refresh cookie instead of a body token.
+  const cookieAuth = COOKIE_AUTH && path.startsWith('/auth/');
+
   let res: Response;
   try {
     res = await fetch(buildUrl(path, query), {
       method,
+      ...(cookieAuth && { credentials: 'include' as const }),
       headers: {
+        ...(cookieAuth && { 'X-Auth-Transport': 'cookie' }),
         Accept: 'application/json',
         // FormData sets its own multipart boundary header.
         ...(body !== undefined && !isFormData && { 'Content-Type': 'application/json' }),
@@ -136,7 +152,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     const offline = !reason || /network request failed|network|timed out|offline/i.test(reason);
     throw new ApiError(
       0,
-      offline ? `Can't reach the server at ${API_URL}${reason ? ` (${reason})` : ''}` : `Request failed: ${reason}`,
+      offline ? 'Can’t reach the server. Check the connection and try again.' : `Request failed: ${reason}`,
       cause,
     );
   }

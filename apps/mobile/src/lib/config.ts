@@ -10,6 +10,8 @@ import Constants from 'expo-constants';
 function resolveApiUrl(): string {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, '');
+  // A release build without an API address would quietly talk to localhost.
+  if (!__DEV__) throw new Error('EXPO_PUBLIC_API_URL is not set for this build');
 
   const devHost = Constants.expoConfig?.hostUri?.split(':')[0];
   return `http://${devHost ?? 'localhost'}:4000/api/v1`;

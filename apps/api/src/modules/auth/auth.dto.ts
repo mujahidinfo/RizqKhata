@@ -24,9 +24,10 @@ export class GoogleSignInDto extends createZodDto(
   }),
 ) {}
 
+/** Apps send the token here; browsers send nothing and use the httpOnly cookie. */
 export class RefreshTokenDto extends createZodDto(
   z.object({
-    refreshToken: z.string().min(1),
+    refreshToken: z.string().min(1).optional(),
   }),
 ) {}
 
