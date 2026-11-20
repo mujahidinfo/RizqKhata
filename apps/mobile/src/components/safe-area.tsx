@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-screens/experimental';
 
-import { Spacing } from '@/constants/theme';
+import { Spacing, WideLayout } from '@/constants/theme';
+import { useWideLayout } from '@/hooks/use-wide-layout';
 
 /*
  * Native safe areas for tab screens.
@@ -37,8 +38,12 @@ export function TabScreen({ style, children }: { style?: StyleProp<ViewStyle>; c
  * the `screenLayout` of the signed-in stack, so every sheet and pushed screen
  * gets it. Scroll views inside still adjust their own insets, and since this
  * view already sits below the header they don't add the top inset twice.
+ * In a desktop browser it also centres the sheet at a readable width.
  */
 export function HeaderSafeArea({ children }: { children: ReactNode }) {
+  const wide = useWideLayout();
+  // Desktop browser: forms and sheets read better as a centred column.
+  if (wide) return <View style={{ flex: 1, width: '100%', maxWidth: WideLayout.sheetMaxWidth, alignSelf: 'center' }}>{children}</View>;
   if (!IOS) return <>{children}</>;
   return <SafeAreaView edges={{ top: true }}>{children}</SafeAreaView>;
 }

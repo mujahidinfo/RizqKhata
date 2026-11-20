@@ -12,6 +12,7 @@ import { Icon } from '@/components/icon';
 import { ListSeparator } from '@/components/list-row';
 import { QueryState } from '@/components/query-state';
 import { CartBar } from '@/components/sell/cart-bar';
+import { CartPanel } from '@/components/sell/cart-panel';
 import { ModeToggle, type SellMode } from '@/components/sell/mode-toggle';
 import { FloatingBottom, TabScreen } from '@/components/safe-area';
 import { ProductCard } from '@/components/sell/product-card';
@@ -20,6 +21,7 @@ import { VariantSheet } from '@/components/sell/variant-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { useWideLayout } from '@/hooks/use-wide-layout';
 import { useTheme } from '@/hooks/use-theme';
 import { ApiError } from '@/lib/api-client';
 import { lineFor, useCart } from '@/lib/cart';
@@ -34,6 +36,9 @@ const HIGHLIGHT_MS = 1200;
 // Room under the last row for the floating cart bar. The tab bar itself is
 // covered by the lists' automatic content inset (iOS) / NativeTabs padding (Android).
 const CART_BAR_SPACE = 96;
+// Web only: the grid fits as many cards of at least this width as it can.
+const MIN_CARD_WIDTH = 170;
+const MAX_COLUMNS = 6;
 
 type ScanStatus =
   | { kind: 'idle' }
@@ -57,6 +62,14 @@ export default function SellScreen() {
   const cart = useCart();
   const formatCurrency = useFormatCurrency();
   const canAddProducts = canEditCatalog(shop.role);
+  // Desktop browser: cart panel beside the grid instead of the floating bar.
+  const wide = useWideLayout();
+  const [gridWidth, setGridWidth] = useState(0);
+  // Phones keep two columns; a browser fits as many as its width allows.
+  const columns =
+    process.env.EXPO_OS === 'web' && gridWidth > 0
+      ? Math.max(2, Math.min(MAX_COLUMNS, Math.floor((gridWidth - Spacing.three) / (MIN_CARD_WIDTH + Spacing.three))))
+      : 2;
 
   const [mode, setMode] = useState<SellMode>('browse');
   const [search, setSearch] = useState('');
@@ -147,10 +160,11 @@ export default function SellScreen() {
     }
   };
 
-  const bottomSpace = (cart.lines.length ? CART_BAR_SPACE : 0) + Spacing.three;
+  const bottomSpace = (cart.lines.length && !wide ? CART_BAR_SPACE : 0) + Spacing.three;
 
   return (
-    <TabScreen style={{ backgroundColor: theme.background }}>
+    <TabScreen style={{ backgroundColor: theme.background, ...(wide && { flexDirection: 'row' }) }}>
+      <View style={{ flex: 1, minWidth: 0 }} onLayout={(e) => setGridWidth(e.nativeEvent.layout.width)}>
       {/* Search + mode */}
       <View style={{ flexDirection: 'row', gap: Spacing.two, paddingHorizontal: Spacing.three, paddingTop: Spacing.two, paddingBottom: Spacing.two }}>
         <SearchPill
@@ -180,8 +194,9 @@ export default function SellScreen() {
           )}
 
           <FlatList
+            key={`grid-${columns}`}
             data={items}
-            numColumns={2}
+            numColumns={columns}
             keyExtractor={(product) => product.id}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -189,8 +204,9 @@ export default function SellScreen() {
             columnWrapperStyle={{ gap: Spacing.three }}
             contentContainerStyle={{ flexGrow: 1, gap: Spacing.three, paddingHorizontal: Spacing.three, paddingTop: Spacing.one, paddingBottom: bottomSpace }}
             renderItem={({ item, index }) => {
-              // Keep a lone last card half-width instead of stretching across.
-              const lone = items.length % 2 === 1 && index === items.length - 1;
+              // Keep the last row's cards at full-row width instead of stretching across.
+              const gap = items.length % columns;
+              const fill = gap > 0 && index === items.length - 1 ? columns - gap : 0;
               const card = (
                 <ProductCard
                   product={item}
@@ -200,10 +216,12 @@ export default function SellScreen() {
                   onDecrease={() => decreaseProduct(item)}
                 />
               );
-              return lone ? (
+              return fill ? (
                 <>
                   {card}
-                  <View style={{ flex: 1 }} />
+                  {Array.from({ length: fill }, (_, i) => (
+                    <View key={i} style={{ flex: 1 }} />
+                  ))}
                 </>
               ) : (
                 card
@@ -233,7 +251,8 @@ export default function SellScreen() {
         </>
       ) : (
         <FlatList
-          data={cart.lines}
+          // On desktop the scanned lines show in the cart panel instead.
+          data={wide ? [] : cart.lines}
           keyExtractor={(l) => l.variantId}
           contentInsetAdjustmentBehavior="automatic"
           ItemSeparatorComponent={ListSeparator}
@@ -272,7 +291,7 @@ export default function SellScreen() {
         />
       )}
 
-      {cart.lines.length > 0 && (
+      {cart.lines.length > 0 && !wide && (
         <FloatingBottom style={{ paddingHorizontal: Spacing.three }}>
           <CartBar
             itemCount={cart.itemCount}
@@ -282,6 +301,9 @@ export default function SellScreen() {
           />
         </FloatingBottom>
       )}
+      </View>
+
+      {wide && <CartPanel highlighted={highlighted} formatCurrency={formatCurrency} />}
 
       <VariantSheet
         product={pickVariantOf}

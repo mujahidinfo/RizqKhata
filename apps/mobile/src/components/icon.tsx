@@ -75,6 +75,7 @@ export const ICONS = {
   whatsapp: { ios: 'message.fill', android: 'chat' },
   device: { ios: 'iphone', android: 'smartphone' },
   clock: { ios: 'clock', android: 'schedule' },
+  more: { ios: 'ellipsis.circle', android: 'more_horiz' },
 } as const satisfies Record<string, { ios: SFSymbol; android: AndroidSymbol }>;
 
 export type IconName = keyof typeof ICONS;
