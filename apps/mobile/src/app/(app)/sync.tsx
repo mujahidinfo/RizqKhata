@@ -23,6 +23,7 @@ import { useT, type Translator } from '@/lib/i18n';
 
 const KIND_ICON: Record<OutboxKind, IconName> = {
   sale: 'bag',
+  refund: 'refund',
   expense: 'wallet',
   billPayment: 'receipt',
   salary: 'team',

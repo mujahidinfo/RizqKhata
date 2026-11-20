@@ -59,6 +59,10 @@ export default function AppLayout() {
             options={{ presentation: modalPresentation, title: t('screens.supplier') }}
           />
           <Stack.Screen
+            name="refund"
+            options={{ presentation: modalPresentation, title: t('screens.refund') }}
+          />
+          <Stack.Screen
             name="supplier-payment"
             options={{ presentation: modalPresentation, title: t('screens.paySupplier') }}
           />

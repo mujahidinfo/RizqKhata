@@ -26,6 +26,7 @@ import type {
   Product,
   RecurringBill,
   RecurringFrequency,
+  Refund,
   Role,
   SalaryType,
   ProductDetail,
@@ -350,6 +351,44 @@ export type NewOrderInput = {
 };
 
 const SALE_REFRESH = [['orders'], ['products'], ['analytics']];
+// A refund lowers takings, so the money overview (under ['expenses']) refreshes too.
+const REFUND_REFRESH = [['orders'], ['analytics'], ['expenses']];
+
+/**
+ * Give money back on an order (owners and managers). It goes through the
+ * outbox like any money write: one Idempotency-Key, so a retry can never pay
+ * the customer twice, and it waits on the phone when offline. Stock is not
+ * changed; the API records money only.
+ */
+export function useRefundOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ orderId, orderNumber, ...input }: { orderId: string; orderNumber: string; amount: number; reason?: string }) =>
+      submit<Refund>({
+        kind: 'refund',
+        title: t('outbox.refund', { number: orderNumber }),
+        amount: input.amount,
+        method: 'POST',
+        path: `/orders/${orderId}/refunds`,
+        body: input,
+        invalidate: REFUND_REFRESH,
+      }),
+    onSuccess: (result) =>
+      result.status === 'synced' &&
+      Promise.all(REFUND_REFRESH.map((queryKey) => queryClient.invalidateQueries({ queryKey }))),
+  });
+}
+
+/** Move a pending or processing order along (needs a connection). */
+export function useOrderStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
+      api<Order>(`/orders/${id}/status`, { method: 'PATCH', body: { status } }),
+    onSuccess: () =>
+      Promise.all([['orders'], ['analytics']].map((queryKey) => queryClient.invalidateQueries({ queryKey }))),
+  });
+}
 
 /**
  * Ring up a sale. Online it's saved straight away; offline (or if the

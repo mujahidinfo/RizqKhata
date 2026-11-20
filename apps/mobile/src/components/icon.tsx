@@ -44,6 +44,7 @@ export const ICONS = {
   info: { ios: 'info.circle.fill', android: 'info' },
   tick: { ios: 'checkmark', android: 'check' },
   receipt: { ios: 'receipt.fill', android: 'receipt_long' },
+  refund: { ios: 'arrow.uturn.backward.circle', android: 'currency_exchange' },
   alert: { ios: 'exclamationmark.triangle.fill', android: 'warning' },
   trend: { ios: 'chart.line.uptrend.xyaxis', android: 'trending_up' },
   star: { ios: 'star.fill', android: 'star' },
