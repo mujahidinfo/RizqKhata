@@ -149,6 +149,9 @@ function ProductForm({ product }: { product?: ProductDetail }) {
   };
 
   const askPhotoSource = () => {
+    // Web: Alert.alert shows nothing in a browser, so go straight to the file
+    // picker (phone browsers offer camera or library there themselves).
+    if (process.env.EXPO_OS === 'web') return void choosePhoto('library');
     const removable = photo.status !== 'none';
     if (process.env.EXPO_OS === 'ios') {
       const options = [
@@ -314,6 +317,10 @@ function ProductForm({ product }: { product?: ProductDetail }) {
         {/* Photo */}
         <View style={{ alignItems: 'center' }}>
           <PhotoTile photo={photo} onPress={askPhotoSource} onRetry={() => photo.status === 'failed' && upload(photo.uri)} />
+          {/* Web has no photo menu (see askPhotoSource), so removing gets its own link. */}
+          {process.env.EXPO_OS === 'web' && photo.status !== 'none' && (
+            <HeaderButton title={t('newProduct.removePhoto')} tone="danger" onPress={removePhoto} />
+          )}
         </View>
 
         {showKind && (

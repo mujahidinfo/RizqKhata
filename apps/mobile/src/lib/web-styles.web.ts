@@ -55,4 +55,40 @@ if (typeof document !== 'undefined' && !document.getElementById('rk-web-styles')
   document.head.appendChild(style);
 }
 
+/**
+ * Sideways rows (category and filter chips) scroll with a swipe on phones, but
+ * a desktop mouse wheel only scrolls vertically, so chips past the edge were
+ * unreachable. Over a row that only scrolls sideways, turn the wheel into a
+ * sideways scroll; at either end the wheel goes back to scrolling the page.
+ */
+function sidewaysScroller(from: EventTarget | null): HTMLElement | null {
+  for (let el = from instanceof HTMLElement ? from : null; el && el !== document.body; el = el.parentElement) {
+    if (el.scrollWidth <= el.clientWidth + 1) continue;
+    const { overflowX, overflowY } = getComputedStyle(el);
+    const sideways = overflowX === 'auto' || overflowX === 'scroll';
+    const vertical = overflowY === 'auto' || overflowY === 'scroll';
+    if (sideways && !vertical) return el;
+  }
+  return null;
+}
+
+if (typeof window !== 'undefined' && !(window as { __rkWheel?: boolean }).__rkWheel) {
+  (window as { __rkWheel?: boolean }).__rkWheel = true;
+  window.addEventListener(
+    'wheel',
+    (event) => {
+      // Trackpad swipes and Shift+wheel already scroll sideways.
+      if (event.ctrlKey || event.shiftKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+      const row = sidewaysScroller(event.target);
+      if (!row) return;
+      const max = row.scrollWidth - row.clientWidth;
+      const atEnd = event.deltaY > 0 ? row.scrollLeft >= max - 1 : row.scrollLeft <= 0;
+      if (atEnd) return;
+      row.scrollLeft += event.deltaY;
+      event.preventDefault();
+    },
+    { passive: false },
+  );
+}
+
 export {};

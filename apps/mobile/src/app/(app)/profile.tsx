@@ -7,6 +7,7 @@ import { ActionSheetIOS, ActivityIndicator, Alert, Platform, Pressable, ScrollVi
 import { useShop, useUpdateShop, type ShopSettingsInput } from '@/api/queries';
 import type { Shop } from '@/api/types';
 import { Avatar } from '@/components/avatar';
+import { HeaderButton } from '@/components/header-button';
 import { Badge } from '@/components/badge';
 import { Button } from '@/components/button';
 import { Icon } from '@/components/icon';
@@ -109,6 +110,9 @@ export default function ProfileScreen() {
 
   const askPhotoSource = () => {
     if (photoBusy) return;
+    // Web: Alert.alert shows nothing in a browser, so go straight to the file
+    // picker (phone browsers offer camera or library there themselves).
+    if (process.env.EXPO_OS === 'web') return void changePhoto('library');
     const removable = Boolean(user.avatarUrl);
     if (process.env.EXPO_OS === 'ios') {
       const options = [
@@ -196,6 +200,10 @@ export default function ProfileScreen() {
             <Icon name="camera" size={14} color={theme.onPrimary} />
           </View>
         </Pressable>
+        {/* Web has no photo menu (see askPhotoSource), so removing gets its own link. */}
+        {process.env.EXPO_OS === 'web' && user.avatarUrl && !photoBusy && (
+          <HeaderButton title={t('newProduct.removePhoto')} tone="danger" onPress={() => void removePhoto()} />
+        )}
         <ThemedText type="title" style={{ fontSize: 24, lineHeight: 30 }}>
           {user.name}
         </ThemedText>
