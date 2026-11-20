@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Tiro_Bangla, Archivo_Narrow } from "next/font/google";
+import { Inter, Tiro_Bangla, Anek_Bangla } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,21 +16,21 @@ const bengali = Tiro_Bangla({
   variable: "--font-bengali",
 });
 
-// Condensed news gothic: the rate-sheet voice. Carries tabular figures for the
-// ledger columns and the column headings, where Tiro Bangla's single weight
-// cannot hold a hierarchy on its own.
-const gothic = Archivo_Narrow({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+// Anek Bangla: the brand display face. One variable family covers Bangla and
+// Latin with real weights, so landing headlines hold their hierarchy in both
+// languages without synthetic bold.
+const display = Anek_Bangla({
+  subsets: ["bengali", "latin"],
+  weight: "variable",
   display: "swap",
-  variable: "--font-gothic",
+  variable: "--font-display",
 });
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Rizq Khata";
 
 export const metadata: Metadata = {
   title: "Rizq Khata – Point of Sale",
-  description: "Modern point-of-sale system for small shops",
+  description: "Point of sale and khata for shops in Bangladesh: sales, stock, customers, repair jobs and every taka going out, in Bangla and English.",
   applicationName: APP_NAME,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -63,36 +63,15 @@ export const viewport: Viewport = {
   ],
 };
 
-const DIRECTION_CONTRACT = `<!--
-THESIS: The shop's day is a rate table — the artifact a Bangladeshi shopkeeper already
-reads each morning: one row, many columns, all of it true. Refuses the SaaS POS page
-(gradient hero, angled screenshot at 15deg, three pastel feature cards, logo bar).
-OWN-WORLD: Warm newsprint ground #F4EFE4 with tooth; exactly two spot inks — ink black
-#14110F and vermilion #C8321E. Hairline column rules, ruled blocks, rubber date stamp,
-halftone photo plates set in multiply. Tiro Bangla is the voice; Archivo Narrow rules the
-columns and tabular figures. No cards, no shadows, no gradients, nothing floats.
-STORY: A shopkeeper recognises their own ledger, better kept; believes one entry keeps
-every account in agreement; starts free.
-FIRST VIEWPORT: Two-rule masthead; headline hung from a continuous matra stroke; beside it
-a ruled counter-sale table whose total row carries the only hot ink, with the primary
-action set in the table's own vocabulary directly beneath the statement.
-FORM: Panjika rate table (Bengali almanac / newspaper commodity rate page), candidate 7 of
-7 on the grounded list, seed key b940c090.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
--->`;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // Bangla is the default; LanguageProvider updates this client-side when the
     // shop (or a landing visitor) selects English.
     <html lang="bn" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${bengali.variable} ${gothic.variable}`}
+        className={`${inter.variable} ${bengali.variable} ${display.variable}`}
         style={{ fontFamily: "var(--font-inter), var(--font-bengali), sans-serif" }}
       >
-        {/* Emitted as a real HTML comment — a JSX comment would not survive compilation,
-            and the direction contract has to be auditable in the shipped markup. */}
-        <div hidden aria-hidden="true" dangerouslySetInnerHTML={{ __html: DIRECTION_CONTRACT }} />
         <Providers>{children}</Providers>
         <Toaster />
         <ServiceWorkerRegistrar />

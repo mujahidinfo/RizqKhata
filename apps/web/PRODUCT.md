@@ -69,18 +69,28 @@ Confirmed, shipped functionality:
 - **Finance (admin only)** — expenses and expense categories, employees and
   salaries, budgets, and generated reports (income statement, expense, salary).
 - **Settings** — shop details, currency, language, team accounts.
+- **Branches** — one business, several branches; staff can be pinned to one.
+- **Service / repair jobs** — intake (device, problem, advance, promised date),
+  services and parts, status board, warranty days, a free WhatsApp "ready"
+  message, and billing into a normal order with the advance deducted.
+- **Money out** — one ledger for expenses, salaries, repeating bills and supplier
+  payments.
+- **Customers & notes** — customer profiles and dues; private or shared notes.
+- **Phone app (Expo, iOS beta on TestFlight)** — works offline: sales, expenses,
+  bill and salary payments, supplier payments and receiving stock queue on the
+  phone and sync when the connection returns.
 
 Constraints:
 
-- Three roles: `ADMIN`, `CASHIER`, `INVENTORY_MANAGER`. Finance is admin-only.
+- Roles: owner, manager, cashier, inventory manager (the web shows owner/manager
+  as `ADMIN`). Finance is owner/manager only.
 - Four payment methods: cash, card, mobile money, bank transfer.
 - Two languages: Bangla (default) and English. Every user-facing string is a
   translation key; no hard-coded prose in components.
 - Default currency BDT, but the shop can change it in settings.
 - Custom cookie-based sessions, not NextAuth.
-- Installable PWA; the service worker deliberately does **not** cache
-  authenticated pages or API responses, so the product does not claim offline
-  selling.
+- The web PWA service worker deliberately does **not** cache authenticated
+  pages or API responses: offline selling is a claim about the **phone app** only.
 
 Undecided / not established:
 
@@ -89,11 +99,13 @@ Undecided / not established:
 
 ## Brand Commitments
 
-- Name: **GenPOS**. Bangla rendering: জেনপস.
+- Name: **Rizq Khata** (Bangla: রিজক খাতা). Packages, cookies and the iOS bundle id
+  still say `genpos`; never show "GenPOS" to users.
+- Logo: a ledger page with a rising arrow, in logo green #17694C and slate #3E4651
+  (`public/logo-mark.png`, `logo-wordmark.png`, `logo-wordmark-dark.png`). Brand
+  green is binding across web and mobile (`brand-50…900` in `globals.css`).
 - Bangla is the default language, including on the landing page. English is a
   switch, not the primary.
-- Bangla type is set in Tiro Bangla, which ships a single 400 weight.
-- Existing accent is indigo; not stated as binding.
 
 ## Evidence on Hand
 
