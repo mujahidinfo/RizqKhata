@@ -10,7 +10,12 @@ export type CartLine = {
   variantName: string | null;
   sku: string | null;
   imageUrl: string | null;
+  /** Sale price for this line. The cashier can change it: prices are agreed at the counter. */
   price: number;
+  /** Catalogue price, kept to show what was changed and to offer a reset. */
+  listPrice: number;
+  /** Only used to warn about selling below cost; never sent to the server. */
+  costPrice: number;
   quantity: number;
 };
 
@@ -21,6 +26,7 @@ type CartState = {
 type Action =
   | { type: 'add'; line: Omit<CartLine, 'quantity'>; quantity: number }
   | { type: 'setQuantity'; variantId: string; quantity: number }
+  | { type: 'setPrice'; variantId: string; price: number }
   | { type: 'clear' };
 
 function reducer(state: CartState, action: Action): CartState {
@@ -45,6 +51,12 @@ function reducer(state: CartState, action: Action): CartState {
                 l.variantId === action.variantId ? { ...l, quantity: action.quantity } : l,
               ),
       };
+    case 'setPrice':
+      return {
+        lines: state.lines.map((l) =>
+          l.variantId === action.variantId ? { ...l, price: Math.max(0, Math.round(action.price * 100) / 100) } : l,
+        ),
+      };
     case 'clear':
       return { lines: [] };
   }
@@ -62,6 +74,8 @@ export function lineFor(product: Product, variantId: string): Omit<CartLine, 'qu
     sku: variant.sku ?? product.sku,
     imageUrl: product.imageUrl,
     price: variant.price ?? product.price,
+    listPrice: variant.price ?? product.price,
+    costPrice: product.costPrice ?? 0,
   };
 }
 
@@ -70,6 +84,7 @@ type CartContextValue = CartState & {
   subtotal: number;
   add: (line: Omit<CartLine, 'quantity'>, quantity?: number) => void;
   setQuantity: (variantId: string, quantity: number) => void;
+  setPrice: (variantId: string, price: number) => void;
   clear: () => void;
 };
 
@@ -90,6 +105,7 @@ export function CartProvider({ children }: PropsWithChildren) {
     subtotal: state.lines.reduce((s, l) => s + l.price * l.quantity, 0),
     add: (line, quantity = 1) => dispatch({ type: 'add', line, quantity }),
     setQuantity: (variantId, quantity) => dispatch({ type: 'setQuantity', variantId, quantity }),
+    setPrice: (variantId, price) => dispatch({ type: 'setPrice', variantId, price }),
     clear: () => dispatch({ type: 'clear' }),
   };
 

@@ -243,10 +243,17 @@ export class OrdersService {
     });
   }
 
+  /**
+   * Give money back, and optionally put returned units back on the shelf of
+   * the branch that sold them, in one transaction. Each unit can come back
+   * once (OrderItem.returnedQty); services are never stocked.
+   */
   refund(tenant: TenantContext, orderId: string, input: CreateRefundDto) {
+    const { items: returns = [], ...money } = input;
     return this.prisma.$transaction(async (tx) => {
       const order = await tx.order.findFirst({
         where: { id: orderId, shopId: tenant.shopId },
+        include: { items: { include: { product: { select: { kind: true } } } } },
       });
       if (!order) throw new NotFoundException('Order not found');
       const existing = await tx.refund.aggregate({
@@ -254,11 +261,46 @@ export class OrdersService {
         _sum: { amount: true },
       });
       const totalRefunded = existing._sum.amount ?? 0;
-      if (totalRefunded + input.amount > order.total) {
+      if (round2(totalRefunded + money.amount) > round2(order.total)) {
         throw new BadRequestException('Refund exceeds order total');
       }
 
-      const refund = await tx.refund.create({ data: { orderId, ...input } });
+      // Merge repeated lines so a duplicated id can't slip past the cap.
+      const wanted = new Map<string, number>();
+      for (const r of returns) wanted.set(r.orderItemId, (wanted.get(r.orderItemId) ?? 0) + r.quantity);
+
+      for (const [orderItemId, quantity] of wanted) {
+        const line = order.items.find((i) => i.id === orderItemId);
+        if (!line) throw new BadRequestException('That item is not on this order');
+        if (line.product.kind === 'SERVICE' || !line.variantId) {
+          throw new BadRequestException(`${line.name} is a service and has no stock to return`);
+        }
+        // Conditional increment: atomic, so two refunds can't return the same unit twice.
+        const { count } = await tx.orderItem.updateMany({
+          where: { id: line.id, returnedQty: { lte: line.quantity - quantity } },
+          data: { returnedQty: { increment: quantity } },
+        });
+        if (count === 0) {
+          throw new BadRequestException(`Only ${line.quantity - line.returnedQty} of ${line.name} can still be returned`);
+        }
+        const key = { shopId: tenant.shopId, variantId: line.variantId };
+        await tx.inventory.upsert({
+          where: { shopId_variantId: key },
+          create: { ...key, quantity },
+          update: { quantity: { increment: quantity } },
+        });
+        await tx.stockMovement.create({
+          data: {
+            ...key,
+            productId: line.productId,
+            type: 'RETURN',
+            quantity,
+            note: `Refund ${order.orderNumber}`,
+          },
+        });
+      }
+
+      const refund = await tx.refund.create({ data: { orderId, ...money } });
       await tx.order.update({
         where: { id: orderId },
         data: { status: 'REFUNDED' },

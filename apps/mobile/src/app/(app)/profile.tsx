@@ -18,7 +18,6 @@ import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { currencyByCode } from '@/constants/currencies';
 import { useTheme } from '@/hooks/use-theme';
-import { API_URL } from '@/lib/config';
 import {
   AVATAR_WIDTH,
   pickProductPhoto,
@@ -330,11 +329,6 @@ export default function ProfileScreen() {
         <ThemedText type="caption" themeColor="textSecondary">
           Rizq Khata {Constants.expoConfig?.version ?? ''}
         </ThemedText>
-        {__DEV__ && (
-          <ThemedText type="caption" themeColor="textSecondary" selectable>
-            {API_URL}
-          </ThemedText>
-        )}
       </View>
     </ScrollView>
   );

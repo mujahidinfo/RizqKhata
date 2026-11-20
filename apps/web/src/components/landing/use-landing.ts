@@ -17,5 +17,7 @@ export function useLanding() {
   return { t, language, num, tk, digits };
 }
 
-export const SIGNUP_HREF = "/signup";
-export const LOGIN_HREF = "/login";
+// Sign-up and sign-in live in the Rizq Khata app (Expo web build), not on this site.
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:8081").replace(/\/$/, "");
+export const SIGNUP_HREF = `${APP_URL}/sign-up`;
+export const LOGIN_HREF = `${APP_URL}/sign-in`;

@@ -254,6 +254,7 @@ export default function SellScreen() {
               highlighted={highlighted === item.variantId}
               formatCurrency={formatCurrency}
               onChangeQuantity={(q) => cart.setQuantity(item.variantId, q)}
+              onChangePrice={(p) => cart.setPrice(item.variantId, p)}
             />
           )}
           ListEmptyComponent={

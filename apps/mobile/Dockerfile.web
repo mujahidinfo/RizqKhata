@@ -1,0 +1,29 @@
+# Rizq Khata app — web build (same code as iOS/Android) — build from the repo root:
+#   docker build -f apps/mobile/Dockerfile.web \
+#     --build-arg EXPO_PUBLIC_API_URL=https://api.rizqkhata.com/api/v1 \
+#     -t rizqkhata-app-web .
+# EXPO_PUBLIC_* values are baked into the bundle at build time (public by design).
+# Remember: add this site's origin to the API's CORS_ORIGINS.
+
+FROM node:24-bookworm-slim AS build
+RUN corepack enable
+WORKDIR /repo
+ARG EXPO_PUBLIC_API_URL
+ARG EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=""
+ENV EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL \
+    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=$EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID \
+    NODE_ENV=production \
+    EXPO_NO_TELEMETRY=1 \
+    CI=1
+RUN case "$EXPO_PUBLIC_API_URL" in https://*) ;; *) echo "EXPO_PUBLIC_API_URL must be an https:// URL" && exit 1;; esac
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/mobile/package.json apps/mobile/
+RUN pnpm install --frozen-lockfile --filter "@genpos/mobile..."
+COPY apps/mobile apps/mobile
+RUN pnpm --filter @genpos/mobile export:web
+
+FROM nginx:1.27-alpine AS runtime
+COPY apps/mobile/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /repo/apps/mobile/dist /usr/share/nginx/html
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1:8080/healthz || exit 1

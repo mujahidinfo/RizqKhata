@@ -429,15 +429,17 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  productId String
-  variantId String?
-  name      String // snapshot at time of sale
-  sku       String?
-  price     Float
-  quantity  Int
-  total     Float
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String
+  variantId   String?
+  name        String // snapshot at time of sale
+  sku         String?
+  price       Float
+  quantity    Int
+  total       Float
+  /// Units brought back and put on the shelf again through refunds (never more than quantity).
+  returnedQty Int     @default(0)
 
   order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product         @relation(fields: [productId], references: [id])

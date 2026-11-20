@@ -75,5 +75,14 @@ export class CreateRefundDto extends createZodDto(
   z.object({
     amount: z.number().positive(),
     reason: z.string().optional(),
+    /** Units that came back and go on the shelf again (stocked lines only). */
+    items: z
+      .array(
+        z.object({
+          orderItemId: z.string(),
+          quantity: z.number().int().positive(),
+        }),
+      )
+      .optional(),
   }),
 ) {}

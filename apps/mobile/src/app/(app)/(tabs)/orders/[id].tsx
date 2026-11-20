@@ -1,8 +1,10 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Alert, Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
-import { useOrder } from '@/api/queries';
+import { useOrder, useOrderStatus } from '@/api/queries';
+import type { Order, OrderStatus } from '@/api/types';
 import { OrderStatusBadge } from '@/components/badge';
+import { Button } from '@/components/button';
 import { Card, DetailRow } from '@/components/card';
 import { QueryState } from '@/components/query-state';
 import { ThemedText } from '@/components/themed-text';
@@ -10,6 +12,9 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatDateTime, useFormatCurrency } from '@/lib/format';
 import { useT } from '@/lib/i18n';
+import { canRefund, NEXT_STATUSES, refundableOf } from '@/lib/orders';
+import { canManage } from '@/lib/roles';
+import { useActiveShop } from '@/lib/session';
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,6 +49,8 @@ export default function OrderDetailScreen() {
           </ThemedText>
         </View>
 
+        <OrderActions order={order} />
+
         <Card title={t('orders.items')}>
           {order.items.map((item) => (
             <View key={item.id} style={styles.item}>
@@ -74,6 +81,7 @@ export default function OrderDetailScreen() {
             <DetailRow label={t('jobs.advanceLess')} value={`−${formatCurrency(order.depositApplied ?? 0)}`} />
           )}
           {refunded > 0 && <DetailRow label={t('orders.refunded')} value={`−${formatCurrency(refunded)}`} />}
+          {refunded > 0 && <DetailRow label={t('orders.kept')} value={formatCurrency(refundableOf(order))} emphasis />}
         </Card>
 
         <Card title={t('orders.details')}>
@@ -100,7 +108,70 @@ export default function OrderDetailScreen() {
   );
 }
 
+/**
+ * What can be done to this order: refund (owners and managers, while money is
+ * left to give back) and moving a pending order along. A counter sale is
+ * already completed, so most orders only ever show Refund.
+ */
+function OrderActions({ order }: { order: Order }) {
+  const t = useT();
+  const formatCurrency = useFormatCurrency();
+  const { role } = useActiveShop();
+  const setStatus = useOrderStatus();
+  const next = NEXT_STATUSES[order.status] ?? [];
+  const refundable = canManage(role) && canRefund(order);
+  if (!refundable && next.length === 0) return null;
+
+  const move = (status: OrderStatus) => {
+    const go = () =>
+      setStatus.mutate(
+        { id: order.id, status },
+        {
+          onError: (e) =>
+            Platform.OS === 'web'
+              ? undefined
+              : Alert.alert(t('orders.couldNotUpdate'), e instanceof Error ? e.message : undefined),
+        },
+      );
+    if (status !== 'CANCELED' || Platform.OS === 'web') return go();
+    Alert.alert(t('orders.cancelTitle'), t('orders.cancelBody'), [
+      { text: t('orders.keepOrder'), style: 'cancel' },
+      { text: t('orders.cancelOrder'), style: 'destructive', onPress: go },
+    ]);
+  };
+
+  return (
+    <View style={styles.actions}>
+      {next.map((status) => (
+        <Button
+          key={status}
+          title={t('orders.markAs', { status: t(`orderStatus.${status}`) })}
+          variant={status === 'CANCELED' ? 'danger' : status === 'FULFILLED' ? 'primary' : 'secondary'}
+          loading={setStatus.isPending && setStatus.variables?.status === status}
+          disabled={setStatus.isPending}
+          onPress={() => move(status)}
+        />
+      ))}
+      {refundable && (
+        <Button
+          title={t('orders.refundUpTo', { amount: formatCurrency(refundableOf(order)) })}
+          variant="secondary"
+          onPress={() => router.push({ pathname: '/refund', params: { orderId: order.id } })}
+        />
+      )}
+      {setStatus.error && Platform.OS === 'web' && (
+        <ThemedText type="small" themeColor="danger" accessibilityLiveRegion="polite">
+          {setStatus.error.message}
+        </ThemedText>
+      )}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  actions: {
+    gap: Spacing.two,
+  },
   content: {
     padding: Spacing.three,
     gap: Spacing.three,

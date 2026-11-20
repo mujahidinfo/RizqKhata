@@ -134,6 +134,7 @@ export default function CheckoutScreen() {
               price: i.price,
               quantity: i.quantity,
               total: round2(i.price * i.quantity),
+              returnedQty: 0,
             })),
             refunds: [],
           },

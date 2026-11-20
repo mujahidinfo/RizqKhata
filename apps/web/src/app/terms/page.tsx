@@ -3,7 +3,8 @@ import { MarketingShell } from "@/components/landing/marketing-shell";
 import { LegalPage } from "@/components/landing/legal-page";
 
 export const metadata: Metadata = {
-  title: "Terms of use · Rizq Khata",
+  title: "Terms of use",
+  alternates: { canonical: "/terms" },
   description: "The terms for using the Rizq Khata website, dashboard and phone apps.",
 };
 

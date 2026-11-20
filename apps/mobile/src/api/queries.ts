@@ -26,6 +26,7 @@ import type {
   Product,
   RecurringBill,
   RecurringFrequency,
+  Refund,
   Role,
   SalaryType,
   ProductDetail,
@@ -350,6 +351,63 @@ export type NewOrderInput = {
 };
 
 const SALE_REFRESH = [['orders'], ['products'], ['analytics']];
+// A refund lowers takings, so the money overview (under ['expenses']) refreshes too.
+const REFUND_REFRESH = [['orders'], ['analytics'], ['expenses']];
+
+/**
+ * Give money back on an order (owners and managers). It goes through the
+ * outbox like any money write: one Idempotency-Key, so a retry can never pay
+ * the customer twice, and it waits on the phone when offline. Returned units
+ * go back on the shelf in the same transaction.
+ */
+export function useRefundOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      orderNumber,
+      ...input
+    }: {
+      orderId: string;
+      orderNumber: string;
+      amount: number;
+      reason?: string;
+      /** Units going back on the shelf; variantId is only used to patch cached stock. */
+      items?: { orderItemId: string; quantity: number; variantId: string }[];
+    }) =>
+      submit<Refund>({
+        kind: 'refund',
+        title: t('outbox.refund', { number: orderNumber }),
+        amount: input.amount,
+        method: 'POST',
+        path: `/orders/${orderId}/refunds`,
+        body: {
+          ...input,
+          items: input.items?.length ? input.items.map(({ orderItemId, quantity }) => ({ orderItemId, quantity })) : undefined,
+        },
+        invalidate: [...REFUND_REFRESH, ['products']],
+      }),
+    onSuccess: (result, input) => {
+      if (result.status === 'queued') {
+        // Show the returned units on the shelf now; the server confirms on sync.
+        if (input.items?.length) adjustCachedStock(queryClient, sumBy(input.items, (i) => i.variantId, (i) => i.quantity, 1));
+        return;
+      }
+      return Promise.all([...REFUND_REFRESH, ['products']].map((queryKey) => queryClient.invalidateQueries({ queryKey })));
+    },
+  });
+}
+
+/** Move a pending or processing order along (needs a connection). */
+export function useOrderStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
+      api<Order>(`/orders/${id}/status`, { method: 'PATCH', body: { status } }),
+    onSuccess: () =>
+      Promise.all([['orders'], ['analytics']].map((queryKey) => queryClient.invalidateQueries({ queryKey }))),
+  });
+}
 
 /**
  * Ring up a sale. Online it's saved straight away; offline (or if the

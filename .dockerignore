@@ -1,0 +1,19 @@
+# Every Dockerfile builds from the repo root (pnpm workspace), so keep the
+# context small and never ship local secrets or build output into an image.
+**/node_modules
+**/.next
+**/dist
+**/.expo
+**/.turbo
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.idea
+.vscode
+**/.impeccable
+**/coverage
+**/*.log
+apps/mobile/ios
+apps/mobile/android

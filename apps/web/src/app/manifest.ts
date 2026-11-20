@@ -12,9 +12,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: `${name} – Point of Sale`,
     short_name: name,
     description:
-      "Point-of-sale, inventory, customers and finance for small shops — works on any phone or tablet.",
-    // Open straight into the till rather than the marketing page.
-    start_url: "/sales",
+      "Point of sale and khata for shops in Bangladesh: sales, stock, customers and repair jobs.",
+    start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "any",

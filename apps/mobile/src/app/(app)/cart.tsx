@@ -55,6 +55,7 @@ export default function CartScreen() {
             highlighted={false}
             formatCurrency={formatCurrency}
             onChangeQuantity={(q) => cart.setQuantity(item.variantId, q)}
+            onChangePrice={(p) => cart.setPrice(item.variantId, p)}
           />
         )}
         ListEmptyComponent={
@@ -76,7 +77,7 @@ export default function CartScreen() {
           }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <ThemedText themeColor="textSecondary">
-              {cart.itemCount} item{cart.itemCount === 1 ? '' : 's'}
+              {t('common.items', { count: cart.itemCount })}
             </ThemedText>
             <ThemedText type="subtitle" style={{ fontVariant: ['tabular-nums'] }}>
               {formatCurrency(cart.subtotal)}

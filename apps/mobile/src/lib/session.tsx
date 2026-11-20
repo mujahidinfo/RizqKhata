@@ -8,6 +8,8 @@ import {
   refreshSession,
   setActiveShopId,
   setTokens,
+  COOKIE_SESSION,
+  refreshBody,
 } from '@/lib/api-client';
 import { clearPersistedCache, queryClient } from '@/lib/query-client';
 import { secureStorage } from '@/lib/secure-storage';
@@ -116,7 +118,8 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
   const persistAuth = (res: AuthResponse) =>
     Promise.all([
-      secureStorage.set(KEYS.refreshToken, res.refreshToken),
+      // On web this is just the COOKIE_SESSION marker; the token itself is an httpOnly cookie.
+      secureStorage.set(KEYS.refreshToken, res.refreshToken ?? COOKIE_SESSION),
       secureStorage.set(KEYS.user, JSON.stringify(res.user)),
     ]);
 
@@ -222,7 +225,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       setState(signedOut);
       // Best effort: revoke the refresh token server-side.
       if (refreshToken) {
-        api('/auth/logout', { method: 'POST', body: { refreshToken }, auth: false }).catch(() => {});
+        api('/auth/logout', { method: 'POST', body: refreshBody(refreshToken), auth: false }).catch(() => {});
       }
     },
 

@@ -19,6 +19,7 @@ import { t } from '@/lib/i18n';
 
 export type OutboxKind =
   | 'sale'
+  | 'refund'
   | 'expense'
   | 'billPayment'
   | 'salary'

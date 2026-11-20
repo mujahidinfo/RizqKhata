@@ -2,7 +2,7 @@
   "expo": {
     "name": "Rizq Khata",
     "slug": "genpos",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "genpos",
@@ -23,11 +23,20 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.rizqkhata.app"
+      "package": "com.rizqkhata.app",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
-      "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "output": "single",
+      "favicon": "./assets/images/favicon.png",
+      "name": "Rizq Khata",
+      "shortName": "Rizq Khata",
+      "lang": "bn",
+      "themeColor": "#17694C",
+      "backgroundColor": "#F3F4F7",
+      "description": "Rizq Khata — point of sale and khata for your shop."
     },
     "plugins": [
       "expo-router",
@@ -62,6 +71,7 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "description": "Point of sale and khata for shops in Bangladesh: sell by barcode, keep stock, run repair jobs and track every taka, in Bangla and English. Works offline."
   }
 }

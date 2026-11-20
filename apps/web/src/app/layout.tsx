@@ -1,21 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Tiro_Bangla, Anek_Bangla } from "next/font/google";
+import { Inter, Anek_Bangla } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/components/providers";
-import { Toaster } from "@/components/ui/toaster";
-import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker-registrar";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-// Tiro Bangla ships a single weight (400). The UI leans on 600–900 for headings,
-// so browsers synthesise those — `font-synthesis: weight` in globals.css keeps
-// that on deliberately, since disabling it would flatten the whole type hierarchy.
-const bengali = Tiro_Bangla({
-  subsets: ["bengali"],
-  weight: "400",
-  display: "swap",
-  variable: "--font-bengali",
-});
-
 // Anek Bangla: the brand display face. One variable family covers Bangla and
 // Latin with real weights, so landing headlines hold their hierarchy in both
 // languages without synthetic bold.
@@ -27,11 +14,25 @@ const display = Anek_Bangla({
 });
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Rizq Khata";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const DESCRIPTION =
+  "Point of sale and khata for shops in Bangladesh: sales, stock, customers, repair jobs and every taka going out, in Bangla and English.";
 
 export const metadata: Metadata = {
-  title: "Rizq Khata – Point of Sale",
-  description: "Point of sale and khata for shops in Bangladesh: sales, stock, customers, repair jobs and every taka going out, in Bangla and English.",
+  metadataBase: new URL(SITE_URL),
+  title: { default: "Rizq Khata – Point of Sale & Khata", template: "%s · Rizq Khata" },
+  description: DESCRIPTION,
   applicationName: APP_NAME,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: "Rizq Khata – Point of Sale & Khata",
+    description: DESCRIPTION,
+    url: "/",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Rizq Khata" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/og.png"] },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -65,16 +66,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // Bangla is the default; LanguageProvider updates this client-side when the
-    // shop (or a landing visitor) selects English.
+    // Bangla is the default; the language switch updates this client-side.
     <html lang="bn" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${bengali.variable} ${display.variable}`}
-        style={{ fontFamily: "var(--font-inter), var(--font-bengali), sans-serif" }}
+        className={`${inter.variable} ${display.variable}`}
+        style={{ fontFamily: "var(--font-inter), var(--font-display), sans-serif" }}
       >
-        <Providers>{children}</Providers>
-        <Toaster />
-        <ServiceWorkerRegistrar />
+        {children}
       </body>
     </html>
   );
