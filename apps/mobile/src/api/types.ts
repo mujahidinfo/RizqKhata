@@ -254,7 +254,10 @@ export type OrderItem = {
   price: number;
   quantity: number;
   total: number;
+  /** Units already brought back to stock through refunds. */
+  returnedQty: number;
   variant?: { id: string; name: string } | null;
+  product?: { kind: ProductKind } | null;
 };
 
 export type Refund = {
