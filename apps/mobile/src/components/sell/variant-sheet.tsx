@@ -1,4 +1,4 @@
-import { Modal, Pressable, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Product } from '@/api/types';
@@ -6,9 +6,13 @@ import { ProductThumb } from '@/components/product-thumb';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useWideLayout } from '@/hooks/use-wide-layout';
 import { useT } from '@/lib/i18n';
 
-/** Pick a size/colour for a product with several variants. */
+/**
+ * Pick a size/colour for a product with several variants: a bottom sheet on
+ * phones, a centred dialog in a desktop browser.
+ */
 export function VariantSheet({
   product,
   formatCurrency,
@@ -23,22 +27,25 @@ export function VariantSheet({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const t = useT();
+  const wide = useWideLayout();
 
   return (
-    <Modal visible={!!product} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={!!product} transparent animationType={wide ? 'fade' : 'slide'} onRequestClose={onClose} statusBarTranslucent>
+      <View style={wide ? styles.centred : styles.fill}>
       <Pressable
         accessibilityLabel={t('common.close')}
         onPress={onClose}
-        style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.4)' }}
+        style={[wide ? StyleSheet.absoluteFill : styles.fill, styles.backdrop]}
       />
       {product && (
         <View
           style={{
             padding: Spacing.four,
-            paddingBottom: Spacing.four + insets.bottom,
+            paddingBottom: Spacing.four + (wide ? 0 : insets.bottom),
             gap: Spacing.three,
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
+            ...(wide && { width: '100%', maxWidth: 520, borderRadius: 24 }),
             borderCurve: 'continuous',
             backgroundColor: theme.backgroundElement,
           }}>
@@ -81,6 +88,13 @@ export function VariantSheet({
           </View>
         </View>
       )}
+      </View>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  centred: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.four },
+  backdrop: { backgroundColor: 'rgba(15, 23, 42, 0.4)' },
+});

@@ -81,3 +81,16 @@ export const Radius = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+/** Desktop-browser layout (web build only; see useWideLayout). */
+export const WideLayout = {
+  /** From this window width the web build shows a sidebar instead of a bottom bar. */
+  breakpoint: 1024,
+  sidebarWidth: 232,
+  /** Tab screens are centred at most this wide. */
+  contentMaxWidth: 1280,
+  /** Sheets and forms are centred at most this wide. */
+  sheetMaxWidth: 760,
+  /** The Sell screen's cart column. */
+  cartPanelWidth: 380,
+} as const;
