@@ -19,6 +19,7 @@ import {
   useCategories,
   useCreateCategory,
   useCreateProduct,
+  useDeleteCategory,
   useDeleteProduct,
   useProduct,
   useSetStock,
@@ -40,6 +41,7 @@ import { ApiError } from '@/lib/api-client';
 import { pickProductPhoto, uploadProductPhoto, type PhotoSource } from '@/lib/product-photo';
 import { useT } from '@/lib/i18n';
 import { useBusinessType } from '@/lib/business';
+import { confirmAction } from '@/lib/confirm';
 
 /** Parse a typed amount; "" → undefined, junk → NaN. Accepts "1,250.50". */
 const toNumber = (text: string) => (text.trim() === '' ? undefined : Number(text.replace(/,/g, '')));
@@ -80,6 +82,7 @@ function ProductForm({ product }: { product?: ProductDetail }) {
   const deleteProduct = useDeleteProduct();
   const categories = useCategories();
   const createCategory = useCreateCategory();
+  const deleteCategory = useDeleteCategory();
 
   // Service shops add services by default; the switch shows wherever services are on.
   const businessType = useBusinessType();
@@ -104,6 +107,7 @@ function ProductForm({ product }: { product?: ProductDetail }) {
   const [barcode, setBarcode] = useState(product?.barcode ?? params.barcode ?? '');
   const [categoryId, setCategoryId] = useState<string | null>(product?.category?.id ?? null);
   const [newCategory, setNewCategory] = useState<string | null>(null);
+  const [editingCategories, setEditingCategories] = useState(false);
   const [showMore, setShowMore] = useState(!!params.barcode || !!product);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -232,23 +236,44 @@ function ProductForm({ product }: { product?: ProductDetail }) {
   };
 
   const confirmDelete = () => {
-    if (!product) return;
-    Alert.alert(t('productForm.deleteTitle'), t('productForm.deleteBody', { name: product.name }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteProduct.mutateAsync(product.id);
-            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            router.dismissTo('/products');
-          } catch (e) {
-            setError(e instanceof Error ? e.message : t('productForm.couldNotDelete'));
-          }
-        },
+    if (!product || deleteProduct.isPending) return;
+    confirmAction({
+      title: t('productForm.deleteTitle'),
+      message: t('productForm.deleteBody', { name: product.name }),
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
+      onConfirm: async () => {
+        setError(null);
+        try {
+          await deleteProduct.mutateAsync(product.id);
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          router.dismissTo('/products');
+        } catch (e) {
+          setError(e instanceof Error ? e.message : t('productForm.couldNotDelete'));
+        }
       },
-    ]);
+    });
+  };
+
+  /** Removes the category; its products stay, just without a category. */
+  const confirmDeleteCategory = (category: { id: string; name: string }) => {
+    if (deleteCategory.isPending) return;
+    confirmAction({
+      title: t('productForm.deleteCategoryTitle', { name: category.name }),
+      message: t('productForm.deleteCategoryBody'),
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
+      onConfirm: async () => {
+        setError(null);
+        try {
+          await deleteCategory.mutateAsync(category.id);
+          if (categoryId === category.id) setCategoryId(null);
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (e) {
+          setError(e instanceof Error ? e.message : t('productForm.couldNotDeleteCategory'));
+        }
+      },
+    });
   };
 
   const save = async (next: 'close' | 'another') => {
@@ -441,16 +466,35 @@ function ProductForm({ product }: { product?: ProductDetail }) {
             )}
 
             <ChipGroup label={t('newProduct.category')}>
-              {(categories.data ?? []).map((c) => (
+              {(categories.data ?? []).map((c) =>
+                editingCategories ? (
+                  // Edit mode: tapping a category deletes it (after a confirm).
+                  <Chip key={c.id} label={`✕ ${c.name}`} selected={false} onPress={() => confirmDeleteCategory(c)} />
+                ) : (
+                  <Chip
+                    key={c.id}
+                    label={c.name}
+                    selected={categoryId === c.id}
+                    onPress={() => setCategoryId(categoryId === c.id ? null : c.id)}
+                  />
+                ),
+              )}
+              {newCategory === null && !editingCategories && (
+                <Chip label={t('newProduct.newChip')} selected={false} onPress={() => setNewCategory('')} />
+              )}
+              {(editingCategories || (newCategory === null && (categories.data?.length ?? 0) > 0)) && (
                 <Chip
-                  key={c.id}
-                  label={c.name}
-                  selected={categoryId === c.id}
-                  onPress={() => setCategoryId(categoryId === c.id ? null : c.id)}
+                  label={editingCategories ? t('common.done') : t('productForm.editCategories')}
+                  selected={editingCategories}
+                  onPress={() => setEditingCategories((v) => !v)}
                 />
-              ))}
-              {newCategory === null && <Chip label={t('newProduct.newChip')} selected={false} onPress={() => setNewCategory('')} />}
+              )}
             </ChipGroup>
+            {editingCategories && (
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('productForm.editCategoriesHint')}
+              </ThemedText>
+            )}
             {newCategory !== null && (
               <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.two }}>
                 <View style={{ flex: 1 }}>

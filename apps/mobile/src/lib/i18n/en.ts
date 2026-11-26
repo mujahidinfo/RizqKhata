@@ -845,6 +845,11 @@ export const en = {
     deleteTitle: 'Delete this product?',
     deleteBody: '{name} will no longer show for selling. Past sales still show it.',
     couldNotDelete: 'Could not delete the product.',
+    editCategories: 'Edit',
+    editCategoriesHint: 'Tap a category to delete it.',
+    deleteCategoryTitle: 'Delete “{name}”?',
+    deleteCategoryBody: 'Its products stay, just without a category.',
+    couldNotDeleteCategory: 'Could not delete the category.',
     stockNote: 'Edited',
   },
   jobStatus: {

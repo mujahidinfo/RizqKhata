@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Switch, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCreateNote, useDeleteNote, useNote, useUpdateNote } from '@/api/queries';
@@ -18,6 +18,7 @@ import { useT } from '@/lib/i18n';
 import { isOnline } from '@/lib/network';
 import { canManage } from '@/lib/roles';
 import { useActiveShop, useCurrentUser } from '@/lib/session';
+import { confirmAction } from '@/lib/confirm';
 
 /** Write a note (`/note-form`) or open one (`/note-form?id=…`). */
 export default function NoteFormScreen() {
@@ -76,23 +77,22 @@ function NoteEditor({ note }: { note?: Note }) {
   };
 
   const confirmDelete = () =>
-    Alert.alert(t('notes.deleteTitle'), t('notes.deleteBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          if (!note) return;
-          if (!isOnline()) return setError(t('notes.needsInternet'));
-          try {
-            await remove.mutateAsync(note.id);
-            router.back();
-          } catch (e) {
-            setError(e instanceof Error ? e.message : t('notes.couldNotDelete'));
-          }
-        },
+    confirmAction({
+      title: t('notes.deleteTitle'),
+      message: t('notes.deleteBody'),
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
+      onConfirm: async () => {
+        if (!note) return;
+        if (!isOnline()) return setError(t('notes.needsInternet'));
+        try {
+          await remove.mutateAsync(note.id);
+          router.back();
+        } catch (e) {
+          setError(e instanceof Error ? e.message : t('notes.couldNotDelete'));
+        }
       },
-    ]);
+    });
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

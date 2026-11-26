@@ -1,4 +1,4 @@
-import { Alert, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/button';
@@ -20,6 +20,7 @@ import {
   type SyncStatus,
 } from '@/lib/outbox';
 import { useT, type Translator } from '@/lib/i18n';
+import { confirmAction } from '@/lib/confirm';
 
 const KIND_ICON: Record<OutboxKind, IconName> = {
   sale: 'bag',
@@ -143,10 +144,13 @@ function ItemRow({ item }: { item: OutboxItem }) {
   const failed = item.status === 'failed';
 
   const confirmDiscard = () =>
-    Alert.alert(t('sync.discardTitle'), t('sync.discardBody', { title: item.title }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.discard'), style: 'destructive', onPress: () => discardItem(item.id) },
-    ]);
+    confirmAction({
+      title: t('sync.discardTitle'),
+      message: t('sync.discardBody', { title: item.title }),
+      confirmText: t('common.discard'),
+      cancelText: t('common.cancel'),
+      onConfirm: () => discardItem(item.id),
+    });
 
   return (
     <View style={{ gap: Spacing.two }}>

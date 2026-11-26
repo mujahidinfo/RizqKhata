@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 
 import { useCustomer, useDeleteCustomer, useUpdateCustomer } from '@/api/queries';
 import type { CustomerDetail } from '@/api/types';
@@ -12,6 +12,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useT } from '@/lib/i18n';
+import { confirmAction } from '@/lib/confirm';
 
 /** `/customer-form?id=…` — fix a customer's name or contact details. */
 export default function CustomerFormScreen() {
@@ -50,31 +51,26 @@ function CustomerForm({ customer }: { customer: CustomerDetail }) {
   };
 
   const confirmDelete = () =>
-    Alert.alert(
-      t('customers.deleteTitle'),
-      [
+    confirmAction({
+      title: t('customers.deleteTitle'),
+      message: [
         t('customers.deleteBody', { name: customer.name }),
         // Orders stay (as walk-in sales) so takings and stock history don't change.
         customer.stats.orderCount ? t('customers.deleteWithOrders', { count: customer.stats.orderCount }) : null,
       ]
         .filter(Boolean)
         .join('\n\n'),
-      [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await remove.mutateAsync(customer.id);
-            router.dismissTo('/more/customers');
-          } catch (e) {
-            setError(e instanceof Error ? e.message : t('customers.couldNotDelete'));
-          }
-        },
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
+      onConfirm: async () => {
+        try {
+          await remove.mutateAsync(customer.id);
+          router.dismissTo('/more/customers');
+        } catch (e) {
+          setError(e instanceof Error ? e.message : t('customers.couldNotDelete'));
+        }
       },
-      ],
-    );
+    });
 
   return (
     <KeyboardAvoidingView
