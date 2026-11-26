@@ -19,6 +19,7 @@ import { whatsappNumber } from '@/lib/business';
 import { formatDateTime, formatDayLabel, formatRelativeDay, useFormatCurrency } from '@/lib/format';
 import { useT } from '@/lib/i18n';
 import { isOnline } from '@/lib/network';
+import { confirmAction } from '@/lib/confirm';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -46,10 +47,13 @@ export default function JobDetailScreen() {
   };
 
   const confirmCancel = () =>
-    Alert.alert(t('jobs.cancelTitle'), t('jobs.cancelBody'), [
-      { text: t('common.close'), style: 'cancel' },
-      { text: t('jobs.cancelJob'), style: 'destructive', onPress: () => move('CANCELLED') },
-    ]);
+    confirmAction({
+      title: t('jobs.cancelTitle'),
+      message: t('jobs.cancelBody'),
+      confirmText: t('jobs.cancelJob'),
+      cancelText: t('common.close'),
+      onConfirm: () => move('CANCELLED'),
+    });
 
   const openWhatsApp = () => {
     if (!job.customer.phone) return Alert.alert(t('jobs.whatsappMissing'));

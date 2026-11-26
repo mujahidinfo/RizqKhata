@@ -274,6 +274,16 @@ export function useCreateCategory() {
   });
 }
 
+/** Deletes a product category; its products stay, just without a category. */
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api(`/categories/${id}`, { method: 'DELETE' }),
+    onSuccess: () =>
+      Promise.all([['categories'], ...PRODUCT_REFRESH].map((queryKey) => queryClient.invalidateQueries({ queryKey }))),
+  });
+}
+
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   return useMutation({

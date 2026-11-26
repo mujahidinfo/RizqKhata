@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useAddShop, useDeleteShop } from '@/api/queries';
 import { Button } from '@/components/button';
@@ -14,6 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useCart } from '@/lib/cart';
 import { useActiveShop, useSession } from '@/lib/session';
 import { useT } from '@/lib/i18n';
+import { confirmAction } from '@/lib/confirm';
 
 /** Switch between branches (and businesses); owners can open a new branch. */
 export default function BranchesScreen() {
@@ -46,29 +47,24 @@ export default function BranchesScreen() {
   /** Owners close a branch of the business they're working in. */
   const confirmDelete = (shop: { id: string; name: string }) => {
     const current = shop.id === active.id;
-    Alert.alert(
-      t('branches.deleteTitle', { name: shop.name }),
-      [t('branches.deleteBody'), current ? t('branches.deleteCurrent') : null].filter(Boolean).join('\n\n'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            setDeleteError(null);
-            try {
-              await deleteShop.mutateAsync(shop.id);
-              // A sale belongs to one branch; don't carry a half-built cart across.
-              if (current) cart.clear();
-              await refreshWorkspaces();
-              void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch (e) {
-              setDeleteError(e instanceof Error ? e.message : t('branches.couldNotDelete'));
-            }
-          },
-        },
-      ],
-    );
+    confirmAction({
+      title: t('branches.deleteTitle', { name: shop.name }),
+      message: [t('branches.deleteBody'), current ? t('branches.deleteCurrent') : null].filter(Boolean).join('\n\n'),
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
+      onConfirm: async () => {
+        setDeleteError(null);
+        try {
+          await deleteShop.mutateAsync(shop.id);
+          // A sale belongs to one branch; don't carry a half-built cart across.
+          if (current) cart.clear();
+          await refreshWorkspaces();
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (e) {
+          setDeleteError(e instanceof Error ? e.message : t('branches.couldNotDelete'));
+        }
+      },
+    });
   };
 
   const create = async () => {

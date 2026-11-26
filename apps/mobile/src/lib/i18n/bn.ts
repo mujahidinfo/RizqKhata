@@ -844,6 +844,11 @@ export const bn: Dictionary = {
     deleteTitle: 'এই প্রোডাক্টটি মুছে ফেলবেন?',
     deleteBody: '{name} আর বিক্রির জন্য দেখা যাবে না। আগের বিক্রিতে থেকে যাবে।',
     couldNotDelete: 'প্রোডাক্ট মুছে ফেলা গেল না।',
+    editCategories: 'এডিট',
+    editCategoriesHint: 'মুছতে একটি ক্যাটাগরিতে ট্যাপ করুন।',
+    deleteCategoryTitle: '“{name}” মুছে ফেলবেন?',
+    deleteCategoryBody: 'এর প্রোডাক্টগুলো থেকে যাবে, শুধু ক্যাটাগরি ছাড়া।',
+    couldNotDeleteCategory: 'ক্যাটাগরি মুছে ফেলা গেল না।',
     stockNote: 'এডিট করা হয়েছে',
   },
   jobStatus: {
